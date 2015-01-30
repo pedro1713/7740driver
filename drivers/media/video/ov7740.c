@@ -11,7 +11,7 @@
 #include <media/soc_camera.h>
 #include <plat/rk_camera.h>
 
-static int debug;
+static int debug = 1;
 module_param(debug, int, S_IRUGO|S_IWUSR);
 
 #define dprintk(level, fmt, arg...) do {			\
@@ -60,7 +60,7 @@ module_param(debug, int, S_IRUGO|S_IWUSR);
 #define CONFIG_SENSOR_Mirror        0
 #define CONFIG_SENSOR_Flip          0
 
-#define CONFIG_SENSOR_I2C_SPEED     250000       /* Hz */
+#define CONFIG_SENSOR_I2C_SPEED     100000       /* Hz */
 /* Sensor write register continues by preempt_disable/preempt_enable for current process not be scheduled */
 #define CONFIG_SENSOR_I2C_NOSCHED   0
 #define CONFIG_SENSOR_I2C_RDWRCHK   0
@@ -1616,7 +1616,7 @@ static int sensor_write(struct i2c_client *client, u8 reg, u8 val)
     u8 buf[2];
     struct i2c_msg msg[1];
 
-    buf[0] = reg;
+    buf[0] = reg & 0xFF;
     buf[1] = val;
 
     msg->addr = client->addr;
@@ -1635,7 +1635,7 @@ static int sensor_write(struct i2c_client *client, u8 reg, u8 val)
         if (err >= 0) {
             return 0;
         } else {
-            SENSOR_TR("\n %s write reg(0x%x, val:0x%x) failed, try to write again!\n",SENSOR_NAME_STRING(),reg, val);
+            SENSOR_TR("\n %s write reg(0x%x, val:0x%x) failed with error %d, try to write again!\n",SENSOR_NAME_STRING(),reg, val, err);
             udelay(10);
         }
     }
@@ -1647,7 +1647,7 @@ ret = i2c_smbus_write_byte_data(client, reg, val);
 	if (reg == 0x12 && (val & 0x80))
 		msleep(2);  /* Wait for reset to run */
 if (ret < 0){
-	SENSOR_TR("\n %s write reg(0x%x, val:0x%x) failed, try to write again!\n",SENSOR_NAME_STRING(),reg, val);
+	SENSOR_TR("\n %s write reg(0x%x, val:0x%x) failed with error %d, try to write again!\n",SENSOR_NAME_STRING(),reg, val, ret);
             udelay(10);
 	}
 else SENSOR_TR("\n %s write reg(0x%x, val:0x%x) SUCCESS!\n",SENSOR_NAME_STRING(),reg, val);
@@ -1827,7 +1827,6 @@ static int sensor_init(struct v4l2_subdev *sd, u32 val)
     int pid = 0;
 
     SENSOR_DG("\n%s..%s.. \n",SENSOR_NAME_STRING(),__FUNCTION__);
-	printk(KERN_NOTICE"OV7740 sensor_init function GO!!\n");
 	if (sensor_ioctrl(icd, Sensor_PowerDown, 0) < 0) {
 		ret = -ENODEV;
 		goto sensor_INIT_ERR;
@@ -1996,7 +1995,7 @@ static int sensor_suspend(struct soc_camera_device *icd, pm_message_t pm_msg)
             }
         }
     } else {
-        SENSOR_TR("\n %s cann't suppout Suspend..\n",SENSOR_NAME_STRING());
+        SENSOR_TR("\n %s cann't support Suspend..\n",SENSOR_NAME_STRING());
         return -EINVAL;
     }
     return 0;
@@ -3073,8 +3072,7 @@ static int sensor_video_probe(struct soc_camera_device *icd,
     /* soft reset */
     ret = sensor_write(client, 0x12, 0x80);
     if (ret != 0) {
-        SENSOR_TR("soft reset %s failed\n",SENSOR_NAME_STRING());
-	SENSOR_TR("OV7740 sensor_video_probe failed\n");
+        SENSOR_TR("soft reset %s failed\n with error %d",SENSOR_NAME_STRING(),ret);
         ret = -ENODEV;
 		goto sensor_video_probe_err;
     }

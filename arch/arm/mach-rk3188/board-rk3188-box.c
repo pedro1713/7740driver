@@ -1836,9 +1836,9 @@ static struct pmu_info  wm8326_ldo_info[] = {
 	},
 	{
 		.name          = "ldo7",   //vcc28_cif
-		.min_uv          = 2800000,
-		.max_uv         = 2800000,
-		.suspend_vol  =  2800000,
+		.min_uv          = 3300000,
+		.max_uv         = 3300000,
+		.suspend_vol  =  3300000,
 	},
 	{
 		.name          = "ldo8",   //vcca33

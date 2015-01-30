@@ -223,9 +223,9 @@ static void rk_cif_power(int on)
     	mdelay(500);
         }
     else{
-    	regulator_set_voltage(ldo_28, 2800000, 2800000);
+    	regulator_set_voltage(ldo_28, 3300000, 3300000);	//changed value of regulator to 3.3 V for OV7740 pedro@po-mo.com
     	regulator_enable(ldo_28);
-   // 	printk("%s set ldo7 vcc28_cif=%dmV end\n", __func__, regulator_get_voltage(ldo_28));
+    	printk(KERN_NOTICE"%s set ldo7 vcc28_cif=%dmV end\n", __func__, regulator_get_voltage(ldo_28));
     	regulator_put(ldo_28);
 
     	regulator_set_voltage(ldo_18, 1800000, 1800000);
