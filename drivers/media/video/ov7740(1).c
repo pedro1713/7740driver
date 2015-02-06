@@ -77,7 +77,7 @@ MODULE_LICENSE("GPL");
 
 #define REG_REG12	0x12
 
-#define REG_REG13	0x13	/* auto/manual AGC, AEC, Write Balance*/
+#define REG_REG13	0x13	/* auto/manual AGC, AEC, White Balance*/
 #define REG13_AEC_EN	0x01
 #define REG13_AGC_EN	0x04
 

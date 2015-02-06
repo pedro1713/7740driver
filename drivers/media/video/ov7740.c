@@ -3297,7 +3297,7 @@ static struct i2c_driver sensor_i2c_driver = {
 
 static int __init sensor_mod_init(void)
 {
-    //SENSOR_DG("\n%s..%s.. \n",__FUNCTION__,SENSOR_NAME_STRING());
+    SENSOR_DG("\n%s..%s.. \n",__FUNCTION__,SENSOR_NAME_STRING());
 	printk(KERN_NOTICE"OmniVision ov7740 sensor driver initiating\n");
 	return i2c_add_driver(&sensor_i2c_driver);
 }
