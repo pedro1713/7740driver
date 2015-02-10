@@ -830,155 +830,92 @@ static int sensor_parameter_record(struct i2c_client *client)
 	struct generic_sensor *sensor = to_generic_sensor(client);
 	struct specific_sensor *spsensor = to_specific_sensor(sensor);
 
-	sensor_read(client,0x3a00, &ret_l);
-	sensor_write(client,0x3a00, ret_l&0xfb);
+	//sensor_read(client,0x3a00, &ret_l);	I don't think there is an equivalent register on the ov7740
+	//sensor_write(client,0x3a00, ret_l&0xfb);
 
-	sensor_write(client,0x3503,0x07);	//stop AE/AG
+	sensor_write(client,0x13,0x82);	//stop AE/AG
 
-	sensor_read(client,0x3500,&ret_h);
-	sensor_read(client,0x3501, &ret_m);
-	sensor_read(client,0x3502, &ret_l);
+	//Read AEC Gain for preview
+	sensor_read(client,0x0F,&ret_h);
+	//sensor_read(client,0x3501, &ret_m); only 16 bits in AEC on ov7740
+	sensor_read(client,0x10, &ret_l);
 	tp_l = ret_l;
-	tp_m = ret_m;
+	//tp_m = ret_m;
 	tp_h = ret_h;
-	spsensor->parameter.preview_exposure = ((tp_h<<12) & 0xF000) | ((tp_m<<4) & 0x0FF0) | ((tp_l>>4) & 0x0F);
-	
+	//spsensor->parameter.preview_exposure = ((tp_h<<12) & 0xF000) | ((tp_m<<4) & 0x0FF0) | ((tp_l>>4) & 0x0F);
+	spsensor->parameter.preview_exposure = ((tp_h << 8) & 0xFF00) | ((tp_l) & 0x00FF);
+
+
 	//Read back AGC Gain for preview
-	sensor_read(client,0x350b, &ret_l);
+	sensor_read(client,0x00, &ret_l);
 	spsensor->parameter.preview_gain = ret_l;
 
 	spsensor->parameter.CapturePclk = 24000;
 	spsensor->parameter.PreviewPclk = 24000;
 	spsensor->parameter.PreviewDummyPixels = 0;
 	spsensor->parameter.CaptureDummyPixels = 0;
-	SENSOR_DG("Read 0x350b=0x%02x  PreviewExposure:%d 0x3500=0x%02x  0x3501=0x%02x 0x3502=0x%02x",
-	          ret_l,spsensor->parameter.preview_exposure,tp_h, tp_m, tp_l);
+	SENSOR_DG("Read 0x00=0x%02x  PreviewExposure:%d 0x0F=0x%02x  0x10=0x%02x",
+		ret_l, spsensor->parameter.preview_exposure, tp_h, tp_l);
+	//SENSOR_DG("Read 0x00=0x%02x  PreviewExposure:%d 0x0F=0x%02x  0x3501=0x%02x 0x3502=0x%02x",
+	//ret_l,spsensor->parameter.preview_exposure,tp_h, tp_m, tp_l);
 	return 0;
 }
-#define OV2659_FULL_PERIOD_PIXEL_NUMS  (1940)  // default pixel#(w/o dummy pixels) in UXGA mode
-#define OV2659_FULL_PERIOD_LINE_NUMS   (1238)  // default line#(w/o dummy lines) in UXGA mode
-#define OV2659_PV_PERIOD_PIXEL_NUMS   (970)  // default pixel#(w/o dummy pixels) in SVGA mode
-#define OV2659_PV_PERIOD_LINE_NUMS	  (618)   // default line#(w/o dummy lines) in SVGA mode
+#define OV7740_FULL_PERIOD_PIXEL_NUMS  (640)  // default pixel#(w/o dummy pixels) in VGA mode
+#define OV7740_FULL_PERIOD_LINE_NUMS   (480)  // default line#(w/o dummy lines) in VGA mode
+#define OV7740_PV_PERIOD_PIXEL_NUMS   (320)  // default pixel#(w/o dummy pixels) in QVGA mode
+#define OV7740_PV_PERIOD_LINE_NUMS	  (240)   // default line#(w/o dummy lines) in QVGA mode
 
 /* SENSOR EXPOSURE LINE LIMITATION */
-#define OV2659_FULL_EXPOSURE_LIMITATION   (1236)
-#define OV2659_PV_EXPOSURE_LIMITATION	  (618)
+//#define OV7740_FULL_EXPOSURE_LIMITATION   (1236)
+//#define OV7740_PV_EXPOSURE_LIMITATION	  (618)
 
-// SENSOR UXGA SIZE
-#define OV2659_IMAGE_SENSOR_FULL_WIDTH	  (1600)
-#define OV2659_IMAGE_SENSOR_FULL_HEIGHT   (1200)
+// SENSOR VGA SIZE
+#define OV7740_IMAGE_SENSOR_FULL_WIDTH	  (656)
+#define OV7740_IMAGE_SENSOR_FULL_HEIGHT   (488)
 
-#define OV2659_FULL_GRAB_WIDTH				(OV2659_IMAGE_SENSOR_FULL_WIDTH - 16)
-#define OV2659_FULL_GRAB_HEIGHT 			(OV2659_IMAGE_SENSOR_FULL_HEIGHT - 12)
-static void OV2659SetDummy(struct i2c_client *client,unsigned int dummy_pixels, unsigned int dummy_lines)
-{
-	unsigned char val;
-	unsigned int temp_reg1, temp_reg2;
-	unsigned int temp_reg;
-	
-	if (dummy_pixels > 0)
-	{
-		sensor_read(client,0x380D,&val);	// HTS[b7~b0]
-		temp_reg1 = val;
-		sensor_read(client,0x380C,&val);	// HTS[b15~b8]
-		temp_reg2 = val;
-		temp_reg = (temp_reg1 & 0xFF) | (temp_reg2 << 8);
-	
-		temp_reg += dummy_pixels;
-	
-		sensor_write(client,0x380D,(temp_reg&0xFF));		 //HTS[7:0]
-		sensor_write(client,0x380C,((temp_reg&0xFF00)>>8));  //HTS[15:8]
-	}
+#define OV7740_FULL_GRAB_WIDTH				(OV7740_IMAGE_SENSOR_FULL_WIDTH - 16)
+#define OV7740_FULL_GRAB_HEIGHT 			(OV7740_IMAGE_SENSOR_FULL_HEIGHT - 8)
 
-	if (dummy_lines > 0)
-	{
-		sensor_read(client,0x380F,&val);	// VTS[b7~b0]
-		temp_reg1 = val;
-		sensor_read(client,0x380E,&val);	// VTS[b15~b8]
-		temp_reg2 = val;
-		temp_reg = (temp_reg1 & 0xFF) | (temp_reg2 << 8);
-	
-		temp_reg += dummy_lines;
-	
-		sensor_write(client,0x380F,(temp_reg&0xFF));		 //VTS[7:0]
-		sensor_write(client,0x380E,((temp_reg&0xFF00)>>8));  //VTS[15:8]
-	}
-}	 /* OV2659_set_dummy */
-
-static void OV2659WriteShutter(struct i2c_client *client,bool is_preview, unsigned int shutter)
-{
-	unsigned int extra_exposure_lines = 0;
-
-	if (shutter < 1)
-	{
-		shutter = 1;
-	}
-	
-	if (is_preview) 
-	{
-		if (shutter <= OV2659_PV_EXPOSURE_LIMITATION) 
-		{
-			extra_exposure_lines = 0;
-		}
-		else 
-		{
-			extra_exposure_lines=shutter - OV2659_PV_EXPOSURE_LIMITATION;
-		}
-		
-	}
-	else 
-	{
-		if (shutter <= OV2659_FULL_EXPOSURE_LIMITATION) 
-		{
-			extra_exposure_lines = 0;
-		}
-		else 
-		{
-			extra_exposure_lines = shutter - OV2659_FULL_EXPOSURE_LIMITATION;
-		}
-		
-	}
-	
-	//AEC PK EXPOSURE
-	shutter*=16;
-	sensor_write(client,0x3502, (shutter & 0x00FF));		   //AEC[7:0]
-	sensor_write(client,0x3501, ((shutter & 0x0FF00) >>8));  //AEC[15:8]
-	sensor_write(client,0x3500, ((shutter & 0xFF0000) >> 16));	
-	
-	if(extra_exposure_lines>0)
-	{
-		// set extra exposure line [aec add vts]
-		sensor_write(client,0x3507, extra_exposure_lines & 0xFF);		   // EXVTS[b7~b0]
-		sensor_write(client,0x3506, (extra_exposure_lines & 0xFF00) >> 8); // EXVTS[b15~b8]
-	}
-	else
-	{
-		// set extra exposure line [aec add vts]
-		sensor_write(client,0x3507, 0x00);			// EXVTS[b7~b0]
-		sensor_write(client,0x3506, 0x00); // EXVTS[b15~b8]
-	}
-	
-}	 /* OV2659_write_shutter */
 static int sensor_ae_transfer(struct i2c_client *client)
 {
-	unsigned int prev_line_len,cap_line_len,shutter;
-	struct generic_sensor *sensor = to_generic_sensor(client);
+	u8	ExposureLow;
+	u8	ExposureHigh;
+	u16 ulCapture_Exposure;
+	u16 Preview_Maxlines;
+	u8	Gain;
+	u16 OV5640_g_iExtra_ExpLines;
+	struct generic_sensor*sensor = to_generic_sensor(client);
 	struct specific_sensor *spsensor = to_specific_sensor(sensor);
+	//Preview_Maxlines = sensor->parameter.preview_line_width;
+	Preview_Maxlines = spsensor->parameter.preview_maxlines;
+	Gain = spsensor->parameter.preview_gain;
 
+
+	ulCapture_Exposure = (spsensor->parameter.preview_exposure);
+
+	SENSOR_DG("cap shutter calutaed = %d, 0x%x\n", ulCapture_Exposure, ulCapture_Exposure);
+
+	// write the gain and exposure to 0x350* registers	
+	sensor_write(client, 0x00, Gain);
+
+//	if (ulCapture_Exposure <= 1940) {
+//		OV5640_g_iExtra_ExpLines = 0;
+//	}
+//	else {
+//		OV5640_g_iExtra_ExpLines = ulCapture_Exposure - 1940;
+//	}
+//	SENSOR_DG("Set Extra-line = %d, iExp = %d \n", OV5640_g_iExtra_ExpLines, ulCapture_Exposure);
+
+	ExposureLow = (ulCapture_Exposure);
+	ExposureHigh = (ulCapture_Exposure >> 8);
+
+//	sensor_write(client, 0x350c, (OV5640_g_iExtra_ExpLines & 0xff00) >> 8);
+//	sensor_write(client, 0x350d, OV5640_g_iExtra_ExpLines & 0xff);
+	sensor_write(client, 0x10, ExposureLow);
+	sensor_write(client, 0x0F, ExposureHigh);
+
+	//SENSOR_DG(" %s Write 0x350b=0x%02x 0x350c=0x%2x  0x350d=0x%2x 0x3502=0x%02x 0x3501=0x%02x 0x3500=0x%02x\n",SENSOR_NAME_STRING(), Gain, ExposureLow, ExposureMid, ExposureHigh);
 	mdelay(100);
-	shutter = spsensor->parameter.preview_exposure;
-
-	OV2659SetDummy(client,600,0);	
-	
-	prev_line_len = OV2659_PV_PERIOD_PIXEL_NUMS + spsensor->parameter.PreviewDummyPixels;
-	cap_line_len = OV2659_FULL_PERIOD_PIXEL_NUMS + spsensor->parameter.CaptureDummyPixels;
-	shutter = (shutter * spsensor->parameter.CapturePclk) / spsensor->parameter.PreviewPclk;
-	shutter = (shutter * prev_line_len) / cap_line_len;
-	shutter*=2;
-
-	OV2659WriteShutter(client,0,shutter);
-	
-	
 	return 0;
 }
 /*
@@ -996,12 +933,9 @@ static int sensor_activate_cb(struct i2c_client *client)
 
     SENSOR_DG("%s",__FUNCTION__);
 	
-	sensor_read(client,0x3000,&reg_val);
-	sensor_write(client, 0x3000, reg_val|0x03);
-	sensor_write(client, 0x3001, 0xff);
-	sensor_read(client,0x3002,&reg_val);
-	sensor_write(client, 0x3002, reg_val|0xe0);
-	
+	sensor_read(client,0x12,&reg_val);
+	sensor_write(client, 0x12, reg_val|0x80);
+
 	return 0;
 }
 /*
@@ -1016,11 +950,8 @@ static int sensor_deactivate_cb(struct i2c_client *client)
     
 	/* ddl@rock-chips.com : all sensor output pin must switch into Hi-Z */
 	if (sensor->info_priv.funmodule_state & SENSOR_INIT_IS_OK) {
-		sensor_read(client,0x3000,&reg_val);
-		sensor_write(client, 0x3000, reg_val&0xfc);
-		sensor_write(client, 0x3001, 0x00);
-		sensor_read(client,0x3002,&reg_val);
-		sensor_write(client, 0x3002, reg_val&0x1f);
+		sensor_read(client,0x0E,&reg_val);
+		sensor_write(client, 0x0E, reg_val|0x04);	// go to sleep...
 	}
 	
 	return 0;
@@ -1090,16 +1021,16 @@ static int sensor_mirror_cb (struct i2c_client *client, int mirror)
     
     SENSOR_DG("mirror: %d",mirror);
 	if (mirror) {
-		err = sensor_read(client, 0x3821, &val);
+		err = sensor_read(client, 0x0C, &val);
 		if (err == 0) {
-			val |= 0x06;
-			err = sensor_write(client, 0x3821, val);
+			val |= 0x40;
+			err = sensor_write(client, 0x0C, val);
 		}
 	} else {
-		err = sensor_read(client, 0x3821, &val);
+		err = sensor_read(client, 0x0C, &val);
 		if (err == 0) {
-			val &= 0xf9;
-			err = sensor_write(client, 0x3821, val);
+			val &= 0xbf;
+			err = sensor_write(client, 0x0C, val);
 		}
 	}
 
@@ -1127,15 +1058,15 @@ static int sensor_flip_cb(struct i2c_client *client, int flip)
 
     SENSOR_DG("flip: %d",flip);
 	if (flip) {
-		err = sensor_read(client, 0x3820, &val);
+		err = sensor_read(client, 0x0C, &val);
 		if (err == 0) {
-			val |= 0x06;
+			val |= 0x80;
 			err = sensor_write(client, 0x3820, val);
 		}
 	} else {
-		err = sensor_read(client, 0x3820, &val);
+		err = sensor_read(client, 0x0C, &val);
 		if (err == 0) {
-			val &= 0xf9;
+			val &= 0x7f;
 			err = sensor_write(client, 0x3820, val);
 		}
 	}
