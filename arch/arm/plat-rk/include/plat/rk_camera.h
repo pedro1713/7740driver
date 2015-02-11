@@ -784,4 +784,3 @@ typedef struct rk29_camera_sensor_cb {
     int (*scale_crop_cb)(struct work_struct *work);
 }rk29_camera_sensor_cb_s;
 #endif /* __ASM_ARCH_CAMERA_H_ */
-
