@@ -89,14 +89,14 @@ struct specific_sensor{
 
 /* Sensor initial setting */
 static struct rk_sensor_reg sensor_init_data[] ={
-	{ 0x13, 0x00 },
+	{ 0x13, 0x00 },//Normal speed AEC,AGC AWB AEC on manual
 
 	{ 0x55, 0x40 },//div
 	{ 0x11, 0x01 },
 
 	{ 0x12, 0x01 },
 	{ 0xd5, 0x10 },
-	{ 0x0c, 0x02 },/*YUV output,YUYV*/
+	{ 0x0c, 0x02 },/*YUV output,YUYV:02 UYVY:12*/
 	{ 0x0d, 0x34 },
 	{ 0x17, 0x25 },
 	{ 0x18, 0xa0 },
@@ -953,7 +953,7 @@ static int sensor_ae_transfer(struct i2c_client *client)
 	sensor_write(client, 0x10, ExposureLow);
 	sensor_write(client, 0x0F, ExposureHigh);
 
-	//SENSOR_DG(" %s Write 0x350b=0x%02x 0x350c=0x%2x  0x350d=0x%2x 0x3502=0x%02x 0x3501=0x%02x 0x3500=0x%02x\n",SENSOR_NAME_STRING(), Gain, ExposureLow, ExposureMid, ExposureHigh);
+	SENSOR_DG(" %s Write 0x00=0x%02x 0x10=0x%02x  0x0F=0x%02x\n",SENSOR_NAME_STRING(), Gain, ExposureLow, ExposureHigh);
 	mdelay(100);
 	return 0;
 }
@@ -989,8 +989,8 @@ static int sensor_deactivate_cb(struct i2c_client *client)
     
 	/* ddl@rock-chips.com : all sensor output pin must switch into Hi-Z */
 	if (sensor->info_priv.funmodule_state & SENSOR_INIT_IS_OK) {
-		sensor_read(client,0x0E,&reg_val);
-		sensor_write(client, 0x0E, reg_val|0x04);	// go to sleep...
+		sensor_read(client,0x12,&reg_val);
+		sensor_write(client, 0x12, reg_val|0x80);
 	}
 	
 	return 0;
@@ -1084,9 +1084,9 @@ static int sensor_v4l2ctrl_mirror_cb(struct soc_camera_device *icd, struct senso
 	struct i2c_client *client = to_i2c_client(to_soc_camera_control(icd));
 
     if (sensor_mirror_cb(client,ext_ctrl->value) != 0)
-		SENSOR_TR("sensor_mirror failed, value:0x%x",ext_ctrl->value);
+		SENSOR_TR("sensor_mirror failed, value:0x%02x",ext_ctrl->value);
 	
-	SENSOR_DG("sensor_mirror success, value:0x%x",ext_ctrl->value);
+	SENSOR_DG("sensor_mirror success, value:0x%02x",ext_ctrl->value);
 	return 0;
 }
 
@@ -1121,9 +1121,9 @@ static int sensor_v4l2ctrl_flip_cb(struct soc_camera_device *icd, struct sensor_
 	struct i2c_client *client = to_i2c_client(to_soc_camera_control(icd));
 
     if (sensor_flip_cb(client,ext_ctrl->value) != 0)
-		SENSOR_TR("sensor_flip failed, value:0x%x",ext_ctrl->value);
+		SENSOR_TR("sensor_flip failed, value:0x%02x",ext_ctrl->value);
 	
-	SENSOR_DG("sensor_flip success, value:0x%x",ext_ctrl->value);
+	SENSOR_DG("sensor_flip success, value:0x%02x",ext_ctrl->value);
 	return 0;
 }
 /*
