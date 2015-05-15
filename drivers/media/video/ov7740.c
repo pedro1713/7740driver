@@ -19,7 +19,7 @@ module_param(debug, int, S_IRUGO|S_IWUSR);
 #define SENSOR_V4L2_IDENT V4L2_IDENT_OV7740
 #define SENSOR_ID 0x7742
 #define SENSOR_BUS_PARAM                     (SOCAM_MASTER |\
-                                             SOCAM_PCLK_SAMPLE_RISING|SOCAM_HSYNC_ACTIVE_HIGH| SOCAM_VSYNC_ACTIVE_HIGH|\
+                                             SOCAM_PCLK_SAMPLE_RISING|SOCAM_HSYNC_ACTIVE_HIGH| SOCAM_VSYNC_ACTIVE_LOW|\
                                              SOCAM_DATA_ACTIVE_HIGH | SOCAM_DATAWIDTH_8  |SOCAM_MCLK_24MHZ)
 #define SENSOR_PREVIEW_W                     640
 #define SENSOR_PREVIEW_H                     480
@@ -87,13 +87,11 @@ struct specific_sensor{
 
 /* Sensor initial setting */
 static struct rk_sensor_reg sensor_init_data[] ={
-	{0x13, 0x00},
-
 	{0x55, 0x40},//div
 	{0x11, 0x01},
 	{0x12, 0x10},
 	{0xd5, 0x10},
-	{0x0c, 0x12},/*YUV output,YUYV, mirror*/
+	{0x0c, 0x12},/*YUV output,UYVY, mirror*/
 	//{0x16, 0x11},/* For mirror mode change SP*/
 
 	{0x0d, 0x34},
@@ -103,7 +101,7 @@ static struct rk_sensor_reg sensor_init_data[] ={
 	{0x1a, 0xf0},
 	{0x1b, 0x89},
 	{0x22, 0x03},
-	{0x29, 0x17},
+	{0x29, 0x18},
 	{0x2b, 0xf8},
 	{0x2c, 0x01},
 	{0x31, 0xa0},
@@ -114,6 +112,7 @@ static struct rk_sensor_reg sensor_init_data[] ={
 
 	{0x04, 0x60},
 	{0x27, 0x80},
+	{0x28, 0x02},
 	{0x3d, 0x0f},
 	{0x3e, 0x82},
 	{0x3f, 0x40},
@@ -228,9 +227,6 @@ static struct rk_sensor_reg sensor_init_data[] ={
 };
 /* Sensor full resolution setting: recommand for capture */
 static struct rk_sensor_reg sensor_fullres_lowfps_data[] ={
-
-	{0x13, 0x00},
-
 	{0x55, 0x40},//div
 	{0x11, 0x01},
 	{0x12, 0x10},
@@ -245,7 +241,7 @@ static struct rk_sensor_reg sensor_fullres_lowfps_data[] ={
 	{0x1a, 0xf0},
 	{0x1b, 0x89},
 	{0x22, 0x03},
-	{0x29, 0x17},
+	{0x29, 0x18},
 	{0x2b, 0xf8},
 	{0x2c, 0x01},
 	{0x31, 0xa0},
@@ -376,23 +372,13 @@ static struct rk_sensor_reg sensor_fullres_highfps_data[] ={
 /* Preview resolution setting*/
 static struct rk_sensor_reg sensor_preview_data[] =
 {
-	{0x13, 0x00},
-
-	{0x55, 0x40},//div
-	{0x11, 0x01},//xvclk1/(1+1)
-	{0x12, 0x10},//YUV mode
-	{0xd5, 0x10},
-	{0x0c, 0x12},/*YUV output,UYVY*/
-	//{0x16, 0x11},/* For mirror mode change SP*/
-
-	{0x0d, 0x34},
-	{0x17, 0x25},//AHSTART
+	{0x17, 0x20},//AHSTART
 	{0x18, 0xa0},//AHSIZE
 	{0x19, 0x03},//AVSTART
 	{0x1a, 0xf0},//AVSIZE
-	{0x1b, 0x89},//Pixel shift
+	{0x1b, 0x80},//Pixel shift
 	{0x22, 0x03},
-	{0x29, 0x17},//Horizontal tp counter End point 
+	{0x29, 0x15},//Horizontal tp counter End point 
 	{0x2b, 0xf8},//Row counter End point 
 	{0x2c, 0x01},//Row counter End point 
 	{0x31, 0xa0},//HOUTSIZE
@@ -401,28 +387,6 @@ static struct rk_sensor_reg sensor_preview_data[] =
 	{0x35, 0x05},
 	{0x36, 0x3f},
 
-	{0x04, 0x60},
-	{0x27, 0x80},//Black sun cancellation enabled
-	{0x3d, 0x0f},
-	{0x3e, 0x82},
-	{0x3f, 0x40},
-	{0x40, 0x7f},
-	{0x41, 0x6a},
-	{0x42, 0x29},
-	{0x44, 0xe5},
-	{0x45, 0x41},
-	{0x47, 0x42},
-	{0x48, 0x00},
-	{0x49, 0x61},
-	{0x4a, 0xa1},
-	{0x4b, 0x46},
-	{0x4c, 0x18},
-	{0x4d, 0x50},
-	{0x4e, 0x13},
-	{0x64, 0x00},
-	{0x67, 0x88},//BLC target
-	{0x68, 0x1a},
-
 	{0x14, 0x30},//AGC gain ceiling set to 16x
 	{0x24, 0x3c},//Luminance signal high range for AEC/AGC operation
 	{0x25, 0x30},//Luminance signal low range for AEC/AGC operation
@@ -430,17 +394,9 @@ static struct rk_sensor_reg sensor_preview_data[] =
 	{0x50, 0x97},//LSB of banding starting step 50Hz
 	{0x51, 0x7e},//LSB of banding starting step 60Hz
 	{0x52, 0x00},//MSB of banding starting step 50/60Hz
-	{0x53, 0x00},
-	{0x20, 0x00},
-	{0x21, 0x23},
 	{0x38, 0x14},//i2c registers sub-address
 	{0xe9, 0x00},//vap control
 	{0x56, 0x55},//Y average select for HDR 4 zones
-	{0x57, 0xff},
-	{0x58, 0xff},
-	{0x59, 0xff},
-	{0x5f, 0x04},
-	{0xec, 0x00},
 	{0x13, 0x87},//activates everything on register 0x13
 
 	{0x80, 0x7d},//ISP control00 - only lens correction disabled
@@ -452,64 +408,25 @@ static struct rk_sensor_reg sensor_preview_data[] =
 	{0x85, 0x00},//AGC offset
 	{0x86, 0x03},//AGC base 1
 	{0x87, 0x01},//AGC base 2
-	{0x88, 0x05},//AGC control 
-	{0x89, 0x30},//LENC control
-	{0x8d, 0x30},
-	{0x8f, 0x85},
-	{0x93, 0x30},
-	{0x95, 0x85},
-	{0x99, 0x30},
-	{0x9b, 0x85},
-
-	{0x9c, 0x08},
-	{0x9d, 0x12},
-	{0x9e, 0x23},
-	{0x9f, 0x45},
-	{0xa0, 0x55},
-	{0xa1, 0x64},
-	{0xa2, 0x72},
-	{0xa3, 0x7f},
-	{0xa4, 0x8b},
-	{0xa5, 0x95},
-	{0xa6, 0xa7},
-	{0xa7, 0xb5},
-	{0xa8, 0xcb},
-	{0xa9, 0xdd},
-	{0xaa, 0xec},
-	{0xab, 0x1a},
-
-	{0xce, 0x78},
-	{0xcf, 0x6e},
-	{0xd0, 0x0a},
-	{0xd1, 0x0c},
-	{0xd2, 0x84},
-	{0xd3, 0x90},
-	{0xd4, 0x1e},
-
-	{0x5a, 0x24},
-	{0x5b, 0x1f},
-	{0x5c, 0x88},
-	{0x5d, 0x60},
-
-	{0xac, 0x6e},
-	{0xbe, 0xff},
-	{0xbf, 0x00},
+	{0x88, 0x05},//AGC control
+	{0x38, 0x17},
+	{0x84, 0x02},//DSP outputs colorbar testing purposes 
 
 	//50/60Hz auto detection is XCLK dependent
 	//the following is based on XCLK = 24MHz
-	{0x70, 0x00},
-	{0x71, 0x34},
-	{0x74, 0x28},
-	{0x75, 0x98},
-	{0x76, 0x00},
-	{0x77, 0x08},
-	{0x78, 0x01},
-	{0x79, 0xc2},
-	{0x7d, 0x02},
-	{0x7a, 0x4e},
-	{0x7b, 0x1f},
-	{0xEC, 0x00},//00/80 for manual/auto
-	{0x7c, 0x0c},
+	//{0x70, 0x00},
+	//{0x71, 0x34},
+	//{0x74, 0x28},
+	//{0x75, 0x98},
+	//{0x76, 0x00},
+	//{0x77, 0x08},
+	//{0x78, 0x01},
+	//{0x79, 0xc2},
+	//{0x7d, 0x02},
+	//{0x7a, 0x4e},
+	//{0x7b, 0x1f},
+	{0xEC, 0x80},//00/80 for manual/auto
+	//{0x7c, 0x0c},
 
 	{0xFF, 0xFF},	/* END MARKER */
 	SensorEnd
@@ -846,8 +763,8 @@ static struct sensor_v4l2ctrl_usr_s sensor_controls[] =
 
 //MUST define the current used format as the first item   
 static struct rk_sensor_datafmt sensor_colour_fmts[] = {
-	{ V4L2_MBUS_FMT_UYVY8_2X8, V4L2_COLORSPACE_JPEG },	
-	{ V4L2_MBUS_FMT_YUYV8_2X8, V4L2_COLORSPACE_JPEG }		
+	{ V4L2_MBUS_FMT_UYVY8_2X8, V4L2_COLORSPACE_JPEG }	
+	//{ V4L2_MBUS_FMT_YUYV8_2X8, V4L2_COLORSPACE_JPEG }		
 };
 
 static struct soc_camera_ops sensor_ops;
@@ -977,11 +894,7 @@ static int sensor_activate_cb(struct i2c_client *client)
 //    u8 reg_val;
 
     SENSOR_DG("%s",__FUNCTION__);
-	
-//	sensor_read(client,0x12,&reg_val);
-//	sensor_write(client, 0x12, reg_val|0x80);
-
-	return 0;
+    return 0;
 }
 /*
 * the function is called in close sensor
@@ -1012,6 +925,15 @@ static int sensor_s_fmt_cb_th(struct i2c_client *client,struct v4l2_mbus_framefm
 
     return 0;
 }
+static int sensor_softrest_usr_cb(struct i2c_client *client,struct rk_sensor_reg *series)
+{
+	
+	return 0;
+}
+static int sensor_check_id_usr_cb(struct i2c_client *client,struct rk_sensor_reg *series)
+{
+	return 0;
+}
 /*
 * the function is called after sensor register setting finished in VIDIOC_S_FMT  
 */
@@ -1020,19 +942,10 @@ static int sensor_s_fmt_cb_bh (struct i2c_client *client,struct v4l2_mbus_framef
     if (capture) {
         sensor_ae_transfer(client);
     }
+    msleep(400);
     return 0;
 }
 static int sensor_try_fmt_cb_th(struct i2c_client *client,struct v4l2_mbus_framefmt *mf)
-{
-	return 0;
-}
-
-static int sensor_softrest_usr_cb(struct i2c_client *client,struct rk_sensor_reg *series)
-{
-	
-	return 0;
-}
-static int sensor_check_id_usr_cb(struct i2c_client *client,struct rk_sensor_reg *series)
 {
 	return 0;
 }
@@ -1061,11 +974,11 @@ static int sensor_resume(struct soc_camera_device *icd)
 }
 static int sensor_mirror_cb (struct i2c_client *client, int mirror)
 {
-	char val;
+	//char val;
 	int err = 0;
     
     SENSOR_DG("mirror: %d",mirror);
-	if (mirror) {
+/*	if (mirror) {
 		err = sensor_read(client, 0x0C, &val);
 		if (err == 0) {
 			val |= 0x40;
@@ -1077,7 +990,7 @@ static int sensor_mirror_cb (struct i2c_client *client, int mirror)
 			val &= 0xbf;
 			err = sensor_write(client, 0x0C, val);
 		}
-	}
+	} */
 
 	return err;    
 }
@@ -1098,11 +1011,11 @@ static int sensor_v4l2ctrl_mirror_cb(struct soc_camera_device *icd, struct senso
 
 static int sensor_flip_cb(struct i2c_client *client, int flip)
 {
-	char val;
+	//char val;
 	int err = 0;	
 
     SENSOR_DG("flip: %d",flip);
-	if (flip) {
+	/*if (flip) {
 		err = sensor_read(client, 0x0C, &val);
 		if (err == 0) {
 			val |= 0x80;
@@ -1114,7 +1027,7 @@ static int sensor_flip_cb(struct i2c_client *client, int flip)
 			val &= 0x7f;
 			err = sensor_write(client, 0x0C, val);
 		}
-	}
+	}*/
 
 	return err;    
 }
