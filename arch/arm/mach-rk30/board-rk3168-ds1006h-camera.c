@@ -36,7 +36,7 @@ Comprehensive camera device registration:
 static struct rkcamera_platform_data new_camera[] = {
     new_camera_device_ex(RK29_CAM_SENSOR_OV7740,
                         back,
-                        INVALID_VALUE,
+                        360,
                         INVALID_VALUE,
                         INVALID_VALUE,
                         INVALID_VALUE,
@@ -47,7 +47,7 @@ static struct rkcamera_platform_data new_camera[] = {
                         CONS(RK29_CAM_SENSOR_OV7740,_FULL_RESOLUTION),
                         0x00,
                         3,
-                        250000,
+                        100000,
                         CONS(RK29_CAM_SENSOR_OV7740,_I2C_ADDR),
                         0,
                         24),                        
@@ -73,10 +73,10 @@ static struct rkcamera_platform_data new_camera[] = {
 #define CONFIG_SENSOR_240X160_FPS_FIXED_0       15000
 #define CONFIG_SENSOR_QVGA_FPS_FIXED_0		15000
 #define CONFIG_SENSOR_CIF_FPS_FIXED_0		15000
-#define CONFIG_SENSOR_VGA_FPS_FIXED_0		30000
-#define CONFIG_SENSOR_480P_FPS_FIXED_0		30000
-#define CONFIG_SENSOR_SVGA_FPS_FIXED_0		0
-#define CONFIG_SENSOR_720P_FPS_FIXED_0		0
+#define CONFIG_SENSOR_VGA_FPS_FIXED_0		15000
+#define CONFIG_SENSOR_480P_FPS_FIXED_0		15000
+#define CONFIG_SENSOR_SVGA_FPS_FIXED_0		15000
+#define CONFIG_SENSOR_720P_FPS_FIXED_0		15000
 
 #define CONFIG_SENSOR_01  RK29_CAM_SENSOR_OV7740                   /* back camera sensor 1 */
 #define CONFIG_SENSOR_IIC_ADDR_01 	    0x00
@@ -91,20 +91,20 @@ static struct rkcamera_platform_data new_camera[] = {
 #define CONFIG_SENSOR_POWERDNACTIVE_LEVEL_01 RK29_CAM_POWERDNACTIVE_H
 #define CONFIG_SENSOR_FLASHACTIVE_LEVEL_01 RK29_CAM_FLASHACTIVE_L
 
-#define CONFIG_SENSOR_QCIF_FPS_FIXED_01      15000
+#define CONFIG_SENSOR_QCIF_FPS_FIXED_01      15000	
 #define CONFIG_SENSOR_240X160_FPS_FIXED_01   15000
 #define CONFIG_SENSOR_QVGA_FPS_FIXED_01      15000
 #define CONFIG_SENSOR_CIF_FPS_FIXED_01       15000
 #define CONFIG_SENSOR_VGA_FPS_FIXED_01       15000
 #define CONFIG_SENSOR_480P_FPS_FIXED_01      15000
 #define CONFIG_SENSOR_SVGA_FPS_FIXED_01      15000
-#define CONFIG_SENSOR_720P_FPS_FIXED_01     10000
+#define CONFIG_SENSOR_720P_FPS_FIXED_01      15000
 
 #define CONFIG_SENSOR_02 RK29_CAM_SENSOR_OV7740                      /* back camera sensor 2 */
 #define CONFIG_SENSOR_IIC_ADDR_02 	   0x00
 #define CONFIG_SENSOR_CIF_INDEX_02         0
 #define CONFIG_SENSOR_IIC_ADAPTER_ID_02    4
-#define CONFIG_SENSOR_ORIENTATION_02       270
+#define CONFIG_SENSOR_ORIENTATION_02       90
 #define CONFIG_SENSOR_POWER_PIN_02         INVALID_GPIO
 #define CONFIG_SENSOR_RESET_PIN_02         INVALID_GPIO
 #define CONFIG_SENSOR_POWERDN_PIN_02       INVALID_GPIO
@@ -118,10 +118,10 @@ static struct rkcamera_platform_data new_camera[] = {
 #define CONFIG_SENSOR_240X160_FPS_FIXED_02   15000
 #define CONFIG_SENSOR_QVGA_FPS_FIXED_02      15000
 #define CONFIG_SENSOR_CIF_FPS_FIXED_02       15000
-#define CONFIG_SENSOR_VGA_FPS_FIXED_02       30000
-#define CONFIG_SENSOR_480P_FPS_FIXED_02      30000
-#define CONFIG_SENSOR_SVGA_FPS_FIXED_02      0			//used to be 15000
-#define CONFIG_SENSOR_720P_FPS_FIXED_02      0			//used to be 10000
+#define CONFIG_SENSOR_VGA_FPS_FIXED_02       15000
+#define CONFIG_SENSOR_480P_FPS_FIXED_02      15000
+#define CONFIG_SENSOR_SVGA_FPS_FIXED_02      15000
+#define CONFIG_SENSOR_720P_FPS_FIXED_02      15000
 
 #define CONFIG_SENSOR_1 RK29_CAM_SENSOR_OV2659                      /* front camera sensor 0 */
 #define CONFIG_SENSOR_IIC_ADDR_1 	    0x00
