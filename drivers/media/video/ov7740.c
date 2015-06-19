@@ -19,12 +19,12 @@ module_param(debug, int, S_IRUGO|S_IWUSR);
 #define SENSOR_V4L2_IDENT V4L2_IDENT_OV7740
 #define SENSOR_ID 0x7742
 #define SENSOR_BUS_PARAM                     (SOCAM_MASTER |\
-                                             SOCAM_PCLK_SAMPLE_RISING|SOCAM_HSYNC_ACTIVE_HIGH| SOCAM_VSYNC_ACTIVE_LOW|\
+                                             SOCAM_PCLK_SAMPLE_FALLING|SOCAM_HSYNC_ACTIVE_HIGH| SOCAM_VSYNC_ACTIVE_LOW|\
                                              SOCAM_DATA_ACTIVE_HIGH | SOCAM_DATAWIDTH_8  |SOCAM_MCLK_24MHZ)
 #define SENSOR_PREVIEW_W                     640
 #define SENSOR_PREVIEW_H                     480
-#define SENSOR_PREVIEW_FPS                   15000      // 15fps 
-#define SENSOR_FULLRES_L_FPS                 30000      // 30fps
+#define SENSOR_PREVIEW_FPS                   30000      // 15fps 
+#define SENSOR_FULLRES_L_FPS                 7500      // 7.5fps
 #define SENSOR_FULLRES_H_FPS                 30000      // 30fps
 #define SENSOR_720P_FPS                      0
 #define SENSOR_1080P_FPS                     0
@@ -87,55 +87,53 @@ struct specific_sensor{
 
 /* Sensor initial setting */
 static struct rk_sensor_reg sensor_init_data[] ={
-	{0x13, 0x00},	
-	{0x55, 0x40},//div
-	{0x11, 0x01},
+	{0x12,0x80},
+	SensorWaitMs(5),
+	{0x13, 0x00}, //Deactivate everything on REG13
+	{0x55, 0x40},
+	{0x11, 0x01},	
 	{0x12, 0x10},
 	{0xd5, 0x10},
-	{0x0c, 0x12},/*YUV output,UYVY, mirror*/
-	{0x16, 0x00},/* For mirror mode change SP*/
-
-	{0x0d, 0x34},
-	{0x17, 0x25},
+	{0x0c, 0x02},
+	{0x0d, 0x34},//Analog setting
+	{0x17, 0x25},//Horizontal start point
 	{0x18, 0xa0},
 	{0x19, 0x03},
 	{0x1a, 0xf0},
 	{0x1b, 0x89},
 	{0x22, 0x03},
-	{0x28, 0x12},//Changing polarity of VSYNC and HREF to negative
-	{0x29, 0x18},
+	{0x29, 0x17},
 	{0x2b, 0xf8},
 	{0x2c, 0x01},
-	{0x31, 0xa0},
-	{0x32, 0xf0},
-	{0x33, 0xc4},
-	{0x35, 0x05},
-	{0x36, 0x3f},
+	{0x31, 0xa0}, //HSIZE MSB
+	{0x32, 0xf0}, //VSIZE MSB
+	{0x33, 0xc4}, //HV OFFSET
+	{0x35, 0x05},//Analog setting
+	{0x36, 0x3f},//Analog setting
 
-	{0x04, 0x60},
-	{0x27, 0x80},
 	{0x28, 0x02},
-	{0x3d, 0x0f},
-	{0x3e, 0x82},
-	{0x3f, 0x40},
-	{0x40, 0x7f},
-	{0x41, 0x6a},
-	{0x42, 0x29},
-	{0x44, 0xe5},
-	{0x45, 0x41},
-	{0x47, 0x42},
-	{0x48, 0x00},
-	{0x49, 0x61},
+	{0x04, 0x60},//Analog setting
+	{0x27, 0x80},
+	{0x3d, 0x0f},//Analog setting
+	{0x3e, 0x81},//Analog setting
+	{0x3f, 0x40},//Analog setting
+	{0x40, 0x7f},//Analog setting
+	{0x41, 0x6a},//Analog setting
+	{0x42, 0x29},//Analog setting
+	{0x44, 0xe5},//Analog setting
+	{0x45, 0x41},//Analog setting
+	{0x47, 0x42},//Analog setting
+	{0x48, 0x00},//Analog setting
+	{0x49, 0x61},//Analog setting
 	{0x4a, 0xa1},
-	{0x4b, 0x46},
+	{0x4b, 0x5e},
 	{0x4c, 0x18},
 	{0x4d, 0x50},
 	{0x4e, 0x13},
 	{0x64, 0x00},
 	{0x67, 0x88},
 	{0x68, 0x1a},
-
-	{0x14, 0x30},
+	{0x14, 0x38},
 	{0x24, 0x3c},
 	{0x25, 0x30},
 	{0x26, 0x72},
@@ -151,22 +149,19 @@ static struct rk_sensor_reg sensor_init_data[] ={
 	{0x57, 0xff},
 	{0x58, 0xff},
 	{0x59, 0xff},
-	{0x5f, 0x04},
+	{0x5f, 0x04}, //Analog setting
 	{0xec, 0x00},
-	{0x13, 0x87},//activates everything in register 13
-
+	{0x13, 0xdf}, //Reactivated everything in register REG13
 	{0x80, 0x7d},
 	{0x81, 0x3f},
 	{0x82, 0x32},
-	{0x83, 0x01},
+	{0x83, 0x01}, 
 	{0x38, 0x11},
-	{0x84, 0x70},
+	{0x84, 0x70},	
 	{0x85, 0x00},
 	{0x86, 0x03},
 	{0x87, 0x01},
 	{0x88, 0x05},
-	{0x38, 0x17},//sub-address
-	{0x84, 0x02},//DSP outputs colorbar testing purposes	
 	{0x89, 0x30},
 	{0x8d, 0x30},
 	{0x8f, 0x85},
@@ -174,7 +169,6 @@ static struct rk_sensor_reg sensor_init_data[] ={
 	{0x95, 0x85},
 	{0x99, 0x30},
 	{0x9b, 0x85},
-
 	{0x9c, 0x08},
 	{0x9d, 0x12},
 	{0x9e, 0x23},
@@ -191,7 +185,6 @@ static struct rk_sensor_reg sensor_init_data[] ={
 	{0xa9, 0xdd},
 	{0xaa, 0xec},
 	{0xab, 0x1a},
-
 	{0xce, 0x78},
 	{0xcf, 0x6e},
 	{0xd0, 0x0a},
@@ -199,141 +192,204 @@ static struct rk_sensor_reg sensor_init_data[] ={
 	{0xd2, 0x84},
 	{0xd3, 0x90},
 	{0xd4, 0x1e},
-
+	{0xd9, 0x00},
 	{0x5a, 0x24},
 	{0x5b, 0x1f},
 	{0x5c, 0x88},
 	{0x5d, 0x60},
-
 	{0xac, 0x6e},
 	{0xbe, 0xff},
 	{0xbf, 0x00},
+	{0x70, 0x00},//50/60Hz auto detection is XCLK dependent
+	{0x71, 0x34},//the following is based on XCLK = 24MHz
+	{0x74, 0x28},
+	{0x75, 0x98},
+	{0x76, 0x00},
+	{0x77, 0x08},
+	{0x78, 0x01},
+	{0x79, 0xc2},
+	{0x7d, 0x02},
+	{0x7a, 0x4e},
+	{0x7b, 0x1f},
+	{0xEC, 0x00},//00/80 for manual/auto
+	{0x7c, 0x0c},
 
-	//50/60Hz auto detection is XCLK dependent
-	//the following is based on XCLK = 24MHz
-	//{0x70, 0x00},
-	//{0x71, 0x34},
-	//{0x74, 0x28},
-	//{0x75, 0x98},
-	//{0x76, 0x00},
-	//{0x77, 0x08},
-	//{0x78, 0x01},
-	//{0x79, 0xc2},
-	//{0x7d, 0x02},
-	//{0x7a, 0x4e},
-	//{0x7b, 0x1f},
-	//{0xEC, 0x00},//00/80 for manual/auto
-	//{0x7c, 0x0c},
 
-	{0xFF, 0xFF},	/* END MARKER */
 	SensorEnd
 	
 };
 /* Sensor full resolution setting: recommand for capture */
 static struct rk_sensor_reg sensor_fullres_lowfps_data[] ={
-
-	{0xFF, 0xFF},	/* END MARKER */
+	//7.5 fps with input clock 24 MHz
+	{0x11, 0x01},
+	{0x55, 0x00},
+	{0x15, 0x00},
 	SensorEnd
 	
 };
 /* Sensor full resolution setting: recommand for video */
 static struct rk_sensor_reg sensor_fullres_highfps_data[] ={
-	{ 0xFF, 0xFF },	/* END MARKER */
 	SensorEnd	
 };
 /* Preview resolution setting*/
 static struct rk_sensor_reg sensor_preview_data[] =
 {
-	{0x13, 0x00},	
-	{0x55, 0x40},//div
-	{0x11, 0x03},
-	{0x12, 0x10},
+	{0x0e, 0xe4}, //Sleep the sensor
+	{0x12, 0x80},
+	SensorWaitMs(5), 	
+	{0x13, 0x00}, //Deactivate everything on REG13
+	//Registers related to CLK	
+	{0x55, 0x40},
+	{0x11, 0x01},
+	
+	{0x12, 0x00},
 	{0xd5, 0x10},
-	{0x0c, 0x12},/*YUV output,UYVY, mirror*/
-	{0x16, 0x00},/* For mirror mode change SP*/
-
-	{0x17, 0x2A},//AHSTART
-	{0x18, 0xa0},//AHSIZE
-	{0x19, 0x03},//AVSTART
-	{0x1a, 0xf0},//AVSIZE
+	{0x0c, 0xd2},
+	{0x0d, 0x34},//Analog setting
+	//Following registers are related to output size	
+	{0x17, 0x25},//Horizontal output start point
+	{0x18, 0xa0},//Horizontal output size
+	{0x19, 0x03},//Vertical start point
+	{0x1a, 0xf0},//Vertical output size
 	{0x1b, 0x89},//Pixel shift
 	{0x22, 0x03},
-	{0x28, 0x12},//Polarity of VSYNC and HREF negative
-	{0x29, 0x17},//Horizontal tp counter End point 
-	{0x2b, 0xf8},//Row counter End point 
-	{0x2c, 0x01},//Row counter End point 
-	{0x31, 0xa0},//HOUTSIZE
-	{0x32, 0xf0},//VOUTSIZE
-	{0x33, 0xc4},
-	{0x35, 0x05},
-	{0x36, 0x3f},
+	{0x29, 0x17},
+	{0x2b, 0xf8},
+	{0x2c, 0x01},
+	{0x31, 0xa0},//HSIZE MSB
+	{0x32, 0xf0},//VSIZE MSB
+	{0x33, 0xc4},//HV Offset
+	{0x35, 0x05},//Analog setting
+	{0x36, 0x3f},//Analog setting
 
-	{0x14, 0x30},//AGC gain ceiling set to 16x
-	{0x24, 0x3c},//Luminance signal high range for AEC/AGC operation
-	{0x25, 0x30},//Luminance signal low range for AEC/AGC operation
-	{0x26, 0x72},//Effective only in AEC fast mode
-	{0x50, 0x97},//LSB of banding starting step 50Hz
-	{0x51, 0x7e},//LSB of banding starting step 60Hz
-	{0x52, 0x00},//MSB of banding starting step 50/60Hz
-	{0x38, 0x14},//i2c registers sub-address
-	{0xe9, 0x00},//vap control
-	{0x56, 0x55},//Y average select for HDR 4 zones
-	{0x13, 0x87},//activates everything on register 0x13
-
-	{0x80, 0x7d},//ISP control00 - only lens correction disabled
-	{0x81, 0x3f},//ISP control01
-	{0x82, 0x32},//ISP control02
-	{0x83, 0x01},//ISP control03
-	{0x38, 0x11},//sub-address of 0x84 4'h1
-	{0x84, 0x70},//Bias control
-	{0x85, 0x00},//AGC offset
-	{0x86, 0x03},//AGC base 1
-	{0x87, 0x01},//AGC base 2
-	{0x88, 0x05},//AGC control
+	{0x28, 0x02},//VSYNC inverse	
+	{0x04, 0x60},//Analog setting
+	{0x27, 0x80},
+	{0x3d, 0x0f},//Analog setting
+	{0x3e, 0x81},//Analog setting
+	{0x3f, 0x40},//Analog setting
+	{0x40, 0x7f},//Analog setting
+	{0x41, 0x6a},//Analog setting
+	{0x42, 0x29},//Analog setting
+	{0x44, 0xe5},//Analog setting
+	{0x45, 0x41},//Analog setting
+	{0x47, 0x42},//Analog setting
+	{0x48, 0x00},//Analog setting
+	{0x49, 0x61},//Analog setting
+	{0x4a, 0xa1},
+	{0x4b, 0x5e},
+	{0x4c, 0x18},
+	{0x4d, 0x50},
+	{0x4e, 0x13},
+	{0x64, 0x00},
+	{0x67, 0x88},
+	{0x68, 0x1a},
+	{0x14, 0x38},
+	{0x24, 0x3c},
+	{0x25, 0x30},
+	{0x26, 0x72},
+	{0x50, 0x97},
+	{0x51, 0x7e},
+	{0x52, 0x00},
+	{0x53, 0x00},
+	{0x20, 0x00},
+	{0x21, 0x23},
+	{0x38, 0x14},
+	{0xe9, 0x00},
+	{0x56, 0x55},
+	{0x57, 0xff},
+	{0x58, 0xff},
+	{0x59, 0xff},
+	{0x5f, 0x04},//Analog setting
+	{0xec, 0x00},
+	{0x13, 0xdf}, //Reactivated everything in register REG13
+	{0x80, 0x7d},
+	{0x81, 0x3f},
+	{0x82, 0x32},
+	{0x83, 0x01},
+	{0x38, 0x11},
+	{0x84, 0x70},	
+	{0x85, 0x00},
+	{0x86, 0x03},
+	{0x87, 0x01},
+	{0x88, 0x05},
+	{0x89, 0x30},
+	{0x8d, 0x30},
+	{0x8f, 0x85},
+	{0x93, 0x30},
+	{0x95, 0x85},
+	{0x99, 0x30},
+	{0x9b, 0x85},
+	{0x9c, 0x08},
+	{0x9d, 0x12},
+	{0x9e, 0x23},
+	{0x9f, 0x45},
+	{0xa0, 0x55},
+	{0xa1, 0x64},
+	{0xa2, 0x72},
+	{0xa3, 0x7f},
+	{0xa4, 0x8b},
+	{0xa5, 0x95},
+	{0xa6, 0xa7},
+	{0xa7, 0xb5},
+	{0xa8, 0xcb},
+	{0xa9, 0xdd},
+	{0xaa, 0xec},
+	{0xab, 0x1a},
+	{0xce, 0x78},
+	{0xcf, 0x6e},
+	{0xd0, 0x0a},
+	{0xd1, 0x0c},
+	{0xd2, 0x84},
+	{0xd3, 0x90},
+	{0xd4, 0x1e},
+	{0xd9, 0x00},
+	{0x5a, 0x24},
+	{0x5b, 0x1f},
+	{0x5c, 0x88},
+	{0x5d, 0x60},
+	{0xac, 0x6e},
+	{0xbe, 0xff},
+	{0xbf, 0x00},
+	{0x70, 0x00},//50/60Hz auto detection is XCLK dependent
+	{0x71, 0x34},//the following is based on XCLK = 24MHz
+	{0x74, 0x28},
+	{0x75, 0x98},
+	{0x76, 0x00},
+	{0x77, 0x08},
+	{0x78, 0x01},
+	{0x79, 0xc2},
+	{0x7d, 0x02},
+	{0x7a, 0x4e},
+	{0x7b, 0x1f},
+	{0xEC, 0x00},//00/80 for manual/auto
+	{0x7c, 0x0c},
 	{0x38, 0x17},
-	{0x84, 0x02},//DSP outputs colorbar testing purposes 
-
-	//50/60Hz auto detection is XCLK dependent
-	//the following is based on XCLK = 24MHz
-	//{0x70, 0x00},
-	//{0x71, 0x34},
-	//{0x74, 0x28},
-	//{0x75, 0x98},
-	//{0x76, 0x00},
-	//{0x77, 0x08},
-	//{0x78, 0x01},
-	//{0x79, 0xc2},
-	//{0x7d, 0x02},
-	//{0x7a, 0x4e},
-	//{0x7b, 0x1f},
-	{0xEC, 0x80},//00/80 for manual/auto
-	//{0x7c, 0x0c},
-
-	{0xFF, 0xFF},	/* END MARKER */
+	{0x84, 0x02},//DSP outputs colorbar testing purposes
+	{0x0e, 0xe0},
 	SensorEnd
 };
 /* 1280x720 */
 static struct rk_sensor_reg sensor_720p[]={
-	{0xFF, 0xFF},	/* END MARKER */	
 	SensorEnd	
 };
 
 /* 1920x1080 */
-static struct rk_sensor_reg sensor_1080p[]={
-	{0xFF, 0xFF},	/* END MARKER */	
+static struct rk_sensor_reg sensor_1080p[]={	
 	SensorEnd
 };
 
 
 static struct rk_sensor_reg sensor_softreset_data[]={
  	SensorRegVal(0x12,0x80),
+	SensorWaitMs(5),
 	SensorEnd
 //	{ 0xFF, 0xFF },	/* END MARKER */
 };
 
 static struct rk_sensor_reg sensor_check_id_data[]={
-    SensorRegVal(0x0a,0),
-    SensorRegVal(0x0b,0),
+    	SensorRegVal(0x0a,0),
+    	SensorRegVal(0x0b,0),
 	SensorEnd
 //	{ 0xFF, 0xFF },	/* END MARKER */
 };
@@ -342,18 +398,23 @@ static struct rk_sensor_reg sensor_check_id_data[]={
 */
 static struct rk_sensor_reg sensor_WhiteB_Auto[]=
 {
-	{0x80, 0x7f},  //AWB auto, bit[4]:1 auto white balance enabled pedro@po-mo.com
+	{0x13, 0xdf},
+	{0x15, 0x00},
+	{0x2d, 0x00},
+	{0x2e, 0x00},	
 	SensorEnd
 //	{ 0xFF, 0xFF },	/* END MARKER */
 };
 /* Cloudy Colour Temperature : 6500K - 8000K  */
 static	struct rk_sensor_reg sensor_WhiteB_Cloudy[]=
 {
-	{0x13, 0x00},
-	{0x00, 0x07},
-	{0x01, 0x08},
-	{0x02, 0x04},
-	{0x03, 0x04},
+	{0x13, 0xdd},
+	{0x01, 0x58},
+	{0x02, 0x60},
+	{0x03, 0x40},
+	{0x15, 0x00},
+	{0x2d, 0x00},
+	{0x2e, 0x00},
 	SensorEnd
 //	{ 0xFF, 0xFF },	/* END MARKER */
 };
@@ -361,11 +422,13 @@ static	struct rk_sensor_reg sensor_WhiteB_Cloudy[]=
 static	struct rk_sensor_reg sensor_WhiteB_ClearDay[]=
 {
 	//Sunny
-	{ 0x13, 0x00 },
-	{ 0x00, 0x02 },
-	{ 0x01, 0x03 },
-	{ 0x02, 0x03 },
-	{ 0x03, 0x03 },
+	{0x13, 0xdd},
+	{0x01, 0x5a},
+	{0x02, 0x5c},
+	{0x03, 0x42},
+	{0x15, 0x00},
+	{0x2d, 0x00},
+	{0x2e, 0x00},
 	SensorEnd
 //	{ 0xFF, 0xFF },	/* END MARKER */
 };
@@ -373,11 +436,13 @@ static	struct rk_sensor_reg sensor_WhiteB_ClearDay[]=
 static	struct rk_sensor_reg sensor_WhiteB_TungstenLamp1[]=
 {
 	//Office
-	{ 0x13, 0x00 },
-	{ 0x00, 0x03 },
-	{ 0x01, 0x03 },
-	{ 0x02, 0x03 },
-	{ 0x03, 0x03 },
+	{ 0x13, 0xdd },
+	{ 0x01, 0x84 },
+	{ 0x02, 0x4c },
+	{ 0x03, 0x40 },
+	{0x15, 0x00},
+	{0x2d, 0x00},
+	{0x2e, 0x00},
 //	{ 0xFF, 0xFF },	/* END MARKER */
 	SensorEnd
 };
@@ -385,11 +450,13 @@ static	struct rk_sensor_reg sensor_WhiteB_TungstenLamp1[]=
 static	struct rk_sensor_reg sensor_WhiteB_TungstenLamp2[]=
 {
 	//Home
-	{ 0x13, 0x00 },
-	{ 0x00, 0x05 },
-	{ 0x01, 0x03 },
-	{ 0x02, 0x03 },
-	{ 0x03, 0x03 },
+	{ 0x13, 0xdd },
+	{ 0x01, 0x96 },
+	{ 0x02, 0x40 },
+	{ 0x03, 0x4a },
+	{0x15, 0x00},
+	{0x2d, 0x00},
+	{0x2e, 0x00},
 	SensorEnd
 };
 static struct rk_sensor_reg *sensor_WhiteBalanceSeqe[] = {sensor_WhiteB_Auto, sensor_WhiteB_TungstenLamp1,sensor_WhiteB_TungstenLamp2,
@@ -443,42 +510,43 @@ static struct rk_sensor_reg *sensor_BrightnessSeqe[] = {sensor_Brightness0, sens
 
 static	struct rk_sensor_reg sensor_Effect_Normal[] =
 {
-//	{ 0xFF, 0xFF },	/* END MARKER */
+	{0x81, 0x3F},
+	{0xda, 0x00},
+	{0xdf, 0x80},
+	{0xe0, 0x80},
 	SensorEnd
 };
 
-static	struct rk_sensor_reg sensor_Effect_WandB[] =
-{
-//	{ 0xFF, 0xFF },	/* END MARKER */
-	SensorEnd
-};
-
-static	struct rk_sensor_reg sensor_Effect_Sepia[] =
-{
-//	{ 0xFF, 0xFF },	/* END MARKER */
-	SensorEnd
-};
 
 static	struct rk_sensor_reg sensor_Effect_Negative[] =
 {
 	//Negative
-//	{ 0xFF, 0xFF },	/* END MARKER */
+	{0x81, 0x3F},
+	{0xda, 0x40},
+	{0xdf, 0x80},
+	{0xe0, 0x80},
 	SensorEnd
 };
 static	struct rk_sensor_reg sensor_Effect_Bluish[] =
 {
-	// Bluish
-//	{ 0xFF, 0xFF },	/* END MARKER */
+	//Bluish
+	{0x81, 0x3F},
+	{0xda, 0x18},
+	{0xdf, 0xa0},
+	{0xe0, 0x40},
 	SensorEnd
 };
 
 static	struct rk_sensor_reg sensor_Effect_Green[] =
 {
-	//	Greenish
-//	{ 0xFF, 0xFF },	/* END MARKER */
+	//Greenish
+	{0x81, 0x3F},
+	{0xda, 0x18},
+	{0xdf, 0x60},
+	{0xe0, 0x60},
 	SensorEnd
 };
-static struct rk_sensor_reg *sensor_EffectSeqe[] = {sensor_Effect_Normal, sensor_Effect_WandB, sensor_Effect_Negative,sensor_Effect_Sepia,
+static struct rk_sensor_reg *sensor_EffectSeqe[] = {sensor_Effect_Normal, sensor_Effect_Negative,
 	sensor_Effect_Bluish, sensor_Effect_Green,NULL,
 };
 
@@ -600,33 +668,32 @@ static	struct rk_sensor_reg sensor_SceneAuto[] =
 
 static	struct rk_sensor_reg sensor_SceneNight[] =
 {
-//	{ 0xFF, 0xFF },	/* END MARKER */
+	//3.75 fps night mode for 60 Hz environment 24MHz input clock
+	{0x11, 0x03},
+	{0x55, 0x00},
+	{0x15, 0x00},
 	SensorEnd
 };
 static struct rk_sensor_reg *sensor_SceneSeqe[] = {sensor_SceneAuto, sensor_SceneNight,NULL,};
 
 static struct rk_sensor_reg sensor_Zoom0[] =
 {
-//	{ 0xFF, 0xFF },	/* END MARKER */
 	SensorEnd
 };
 
 static struct rk_sensor_reg sensor_Zoom1[] =
 {
-//	{ 0xFF, 0xFF },	/* END MARKER */
 	SensorEnd
 };
 
 static struct rk_sensor_reg sensor_Zoom2[] =
 {
-//	{ 0xFF, 0xFF },	/* END MARKER */
 	SensorEnd
 };
 
 
 static struct rk_sensor_reg sensor_Zoom3[] =
 {
-//	{ 0xFF, 0xFF },	/* END MARKER */
 	SensorEnd
 };
 static struct rk_sensor_reg *sensor_ZoomSeqe[] = {sensor_Zoom0, sensor_Zoom1, sensor_Zoom2, sensor_Zoom3, NULL,};
@@ -646,8 +713,8 @@ static struct sensor_v4l2ctrl_usr_s sensor_controls[] =
 
 //MUST define the current used format as the first item   
 static struct rk_sensor_datafmt sensor_colour_fmts[] = {
-	{ V4L2_MBUS_FMT_UYVY8_2X8, V4L2_COLORSPACE_JPEG }	
-	//{ V4L2_MBUS_FMT_YUYV8_2X8, V4L2_COLORSPACE_JPEG }		
+	{ V4L2_MBUS_FMT_UYVY8_2X8,V4L2_COLORSPACE_SRGB },	
+	{ V4L2_MBUS_FMT_YUYV8_2X8,V4L2_COLORSPACE_SRGB }		
 };
 
 static struct soc_camera_ops sensor_ops;
@@ -672,12 +739,9 @@ static int sensor_parameter_record(struct i2c_client *client)
 
 	//Read AEC Gain for preview
 	sensor_read(client,0x0F,&ret_h);
-	//sensor_read(client,0x3501, &ret_m); only 16 bits in AEC on ov7740
 	sensor_read(client,0x10, &ret_l);
 	tp_l = ret_l;
-	//tp_m = ret_m;
 	tp_h = ret_h;
-	//spsensor->parameter.preview_exposure = ((tp_h<<12) & 0xF000) | ((tp_m<<4) & 0x0FF0) | ((tp_l>>4) & 0x0F);
 	spsensor->parameter.preview_exposure = ((tp_h << 8) & 0xFF00) | ((tp_l) & 0x00FF);
 
 
@@ -686,78 +750,101 @@ static int sensor_parameter_record(struct i2c_client *client)
 	spsensor->parameter.preview_gain = ret_l;
 
 	spsensor->parameter.CapturePclk = 24000;
-	spsensor->parameter.PreviewPclk = 12000;
+	spsensor->parameter.PreviewPclk = 24000;
 	spsensor->parameter.PreviewDummyPixels = 0;
 	spsensor->parameter.CaptureDummyPixels = 0;
 	SENSOR_DG("Read 0x00=0x%02x  PreviewExposure:%d 0x0F=0x%02x  0x10=0x%02x",
 		ret_l, spsensor->parameter.preview_exposure, tp_h, tp_l);
-	//SENSOR_DG("Read 0x00=0x%02x  PreviewExposure:%d 0x0F=0x%02x  0x3501=0x%02x 0x3502=0x%02x",
-	//ret_l,spsensor->parameter.preview_exposure,tp_h, tp_m, tp_l);
 	return 0;
 }
-#define OV7740_FULL_PERIOD_PIXEL_NUMS  (640)  // default pixel#(w/o dummy pixels) in VGA mode
-#define OV7740_FULL_PERIOD_LINE_NUMS   (480)  // default line#(w/o dummy lines) in VGA mode
-#define OV7740_PV_PERIOD_PIXEL_NUMS   (320)  // default pixel#(w/o dummy pixels) in QVGA mode
-#define OV7740_PV_PERIOD_LINE_NUMS	  (240)   // default line#(w/o dummy lines) in QVGA mode
-#define OV5640_FULL_PERIOD_PIXEL_NUMS_HTS		  (2844) 
-#define OV5640_FULL_PERIOD_LINE_NUMS_VTS		  (1968) 
-#define OV5640_PV_PERIOD_PIXEL_NUMS_HTS 		  (1896) 
-#define OV5640_PV_PERIOD_LINE_NUMS_VTS			  (984) 
-
-#define OV7740_FULL_PERIOD_PIXEL_NUMS_HTS		  (656) 
-#define OV7740_FULL_PERIOD_LINE_NUMS_VTS		  (488) 
-#define OV7740_PV_PERIOD_PIXEL_NUMS_HTS 		  (320) 
-#define OV7740_PV_PERIOD_LINE_NUMS_VTS			  (240) 
+#define OV7740_FULL_PERIOD_PIXEL_NUMS	(656)  // default pixel#(w/o dummy pixels) in VGA mode
+#define OV7740_FULL_PERIOD_LINE_NUMS	(496)  // default line#(w/o dummy lines) in VGA mode
+#define OV7740_PV_PERIOD_PIXEL_NUMS	(656)  // default pixel#(w/o dummy pixels) in QVGA mode
+#define OV7740_PV_PERIOD_LINE_NUMS	(496)  // default line#(w/o dummy lines) in QVGA mode
 
 /* SENSOR EXPOSURE LINE LIMITATION */
-//#define OV7740_FULL_EXPOSURE_LIMITATION   (1236)
-//#define OV7740_PV_EXPOSURE_LIMITATION	  (618)
+#define OV7740_FULL_EXPOSURE_LIMITATION   (488)
+#define OV7740_PV_EXPOSURE_LIMITATION	  (488)
 
 // SENSOR VGA SIZE
-#define OV7740_IMAGE_SENSOR_FULL_WIDTH	  (656)
-#define OV7740_IMAGE_SENSOR_FULL_HEIGHT   (488)
+#define OV7740_IMAGE_SENSOR_FULL_WIDTH	  (640)
+#define OV7740_IMAGE_SENSOR_FULL_HEIGHT   (480)
 
 #define OV7740_FULL_GRAB_WIDTH				(OV7740_IMAGE_SENSOR_FULL_WIDTH - 16)
-#define OV7740_FULL_GRAB_HEIGHT 			(OV7740_IMAGE_SENSOR_FULL_HEIGHT - 8)
+#define OV7740_FULL_GRAB_HEIGHT 			(OV7740_IMAGE_SENSOR_FULL_HEIGHT - 16)
+
+static void OV7740WriteShutter(struct i2c_client *client,bool is_preview, unsigned int shutter)
+{
+	unsigned int extra_exposure_lines = 0;
+
+	if (shutter < 1)
+	{
+		shutter = 1;
+	}
+	
+	if (is_preview) 
+	{
+		if (shutter <= OV7740_PV_EXPOSURE_LIMITATION) 
+		{
+			extra_exposure_lines = 0;
+		}
+		else 
+		{
+			extra_exposure_lines=shutter - OV7740_PV_EXPOSURE_LIMITATION;
+		}
+		
+	}
+	else 
+	{
+		if (shutter <= OV7740_FULL_EXPOSURE_LIMITATION) 
+		{
+			extra_exposure_lines = 0;
+		}
+		else 
+		{
+			extra_exposure_lines = shutter - OV7740_FULL_EXPOSURE_LIMITATION;
+		}
+		
+	}
+	
+	//AEC PK EXPOSURE
+	shutter*=16;
+	sensor_write(client,0x10, (shutter & 0x00FF));		   //AEC[7:0]
+	sensor_write(client,0x0F, ((shutter & 0xFF00) >>8));  //AEC[15:8]
+
+	if(extra_exposure_lines>0)
+	{
+		// set extra exposure line [aec add vts]
+		printk(KERN_ERR "ah doesn't knows whut t'do coach\n");
+	}
+	else
+	{
+		// set extra exposure line [aec add vts]
+		printk(KERN_WARNING "that was easy\n");
+	}
+	
+}
 
 static int sensor_ae_transfer(struct i2c_client *client)
 {
-	u8	ExposureLow;
-	u8	ExposureHigh;
-	u16 ulCapture_Exposure;
-	u16 Preview_Maxlines;
-	u8	Gain;
-	struct generic_sensor*sensor = to_generic_sensor(client);
+	unsigned int prev_line_len,cap_line_len,shutter;
+	struct generic_sensor *sensor = to_generic_sensor(client);
 	struct specific_sensor *spsensor = to_specific_sensor(sensor);
-	Preview_Maxlines = spsensor->parameter.preview_maxlines;
-	Gain = spsensor->parameter.preview_gain;
 
-
-	ulCapture_Exposure = (spsensor->parameter.preview_exposure*OV7740_PV_PERIOD_PIXEL_NUMS_HTS)/OV7740_FULL_PERIOD_PIXEL_NUMS_HTS;
-
-	SENSOR_DG("cap shutter calculated = %d, 0x%x\n", ulCapture_Exposure, ulCapture_Exposure);
-
-	// write the gain and exposure to 0x350* registers	
-	sensor_write(client, 0x00, Gain);
-
-//	if (ulCapture_Exposure <= 1940) {
-//		OV5640_g_iExtra_ExpLines = 0;
-//	}
-//	else {
-//		OV5640_g_iExtra_ExpLines = ulCapture_Exposure - 1940;
-//	}
-//	SENSOR_DG("Set Extra-line = %d, iExp = %d \n", OV5640_g_iExtra_ExpLines, ulCapture_Exposure);
-
-	ExposureLow = (ulCapture_Exposure);
-	ExposureHigh = (ulCapture_Exposure >> 8);
-
-//	sensor_write(client, 0x350c, (OV5640_g_iExtra_ExpLines & 0xff00) >> 8);
-//	sensor_write(client, 0x350d, OV5640_g_iExtra_ExpLines & 0xff);
-	sensor_write(client, 0x10, ExposureLow);
-	sensor_write(client, 0x0F, ExposureHigh);
-
-	SENSOR_DG(" %s Write 0x00=0x%02x 0x10=0x%02x  0x0F=0x%02x\n",SENSOR_NAME_STRING(), Gain, ExposureLow, ExposureHigh);
 	mdelay(100);
+	shutter = spsensor->parameter.preview_exposure;
+
+	//OV2659SetDummy(client,600,0);	
+	
+	prev_line_len = OV7740_PV_PERIOD_PIXEL_NUMS + spsensor->parameter.PreviewDummyPixels;
+	cap_line_len = OV7740_FULL_PERIOD_PIXEL_NUMS + spsensor->parameter.CaptureDummyPixels;
+	shutter = (shutter * spsensor->parameter.CapturePclk) / spsensor->parameter.PreviewPclk;
+	shutter = (shutter * prev_line_len) / cap_line_len;
+	shutter*=2;
+
+	OV7740WriteShutter(client,0,shutter);
+	
+	
 	return 0;
 }
 /*
@@ -782,15 +869,14 @@ static int sensor_activate_cb(struct i2c_client *client)
 static int sensor_deactivate_cb(struct i2c_client *client)
 {
 //	u8 reg_val;
-//	struct generic_sensor *sensor = to_generic_sensor(client);
+	struct generic_sensor *sensor = to_generic_sensor(client);
 
     SENSOR_DG("%s",__FUNCTION__);
     
 	/* ddl@rock-chips.com : all sensor output pin must switch into Hi-Z */
-/*	if (sensor->info_priv.funmodule_state & SENSOR_INIT_IS_OK) {
-		sensor_read(client,0x12,&reg_val);
-		sensor_write(client, 0x12, reg_val|0x80);
-	}*/
+	if (sensor->info_priv.funmodule_state & SENSOR_INIT_IS_OK) {
+	
+	}
 	
 	return 0;
 }
