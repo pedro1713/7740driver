@@ -1,4 +1,3 @@
-
 #include "generic_sensor.h"
 /*
 *      Driver Version Note
@@ -23,9 +22,9 @@ module_param(debug, int, S_IRUGO|S_IWUSR);
                                              SOCAM_DATA_ACTIVE_HIGH | SOCAM_DATAWIDTH_8  |SOCAM_MCLK_24MHZ)
 #define SENSOR_PREVIEW_W                     640
 #define SENSOR_PREVIEW_H                     480
-#define SENSOR_PREVIEW_FPS                   30000      // 15fps 
+#define SENSOR_PREVIEW_FPS                   30000     // 15fps
 #define SENSOR_FULLRES_L_FPS                 7500      // 7.5fps
-#define SENSOR_FULLRES_H_FPS                 30000      // 30fps
+#define SENSOR_FULLRES_H_FPS                 30000     // 30fps
 #define SENSOR_720P_FPS                      0
 #define SENSOR_1080P_FPS                     0
 
@@ -74,7 +73,7 @@ struct specific_sensor{
 *  sensor_fullres_lowfps_data :     Sensor full resolution setting with best quality, recommend for video;
 *  sensor_preview_data :            Sensor preview resolution setting, recommand it is vga or svga;
 *  sensor_softreset_data :          Sensor software reset register;
-*  sensor_check_id_data :           Sensir chip id register;
+*  sensor_check_id_data :           Sensor chip id register;
 *
 *  Optional filled:
 *  sensor_fullres_highfps_data:     Sensor full resolution setting with high framerate, recommand for video;
@@ -85,29 +84,42 @@ struct specific_sensor{
 *  The SensorEnd which is the setting end flag must be filled int the last of each setting;
 */
 
+#define ENDMARKER {0xff, 0xff}
+#define SENSOR_RST {0x12, 0x80}
+#define REG55_PLLx4 {0x55, 0x40}
+#define CLK_DIV {0x11, 0x01}
+#define HOUT_START {0x17, 0x25}
+#define HOUT_SIZE {0x18, 0xa0}
+#define VOUT_START {0x19, 0x03}
+#define VOUT_SIZE {0x1a, 0xf0}
+#define PIX_SHIFT {0x1b, 0x89}
+
 /* Sensor initial setting */
 static struct rk_sensor_reg sensor_init_data[] ={
-	{0x12,0x80},
+	SENSOR_RST,
 	SensorWaitMs(5),
-	{0x13, 0x00}, //Deactivate everything on REG13
-	{0x55, 0x40},
-	{0x11, 0x01},	
+	{0x13, 0x00},//Deactivate everything on REG13
+	REG55_PLLx4,
+	CLK_DIV,
+
 	{0x12, 0x10},
 	{0xd5, 0x10},
 	{0x0c, 0x02},
 	{0x0d, 0x34},//Analog setting
-	{0x17, 0x25},//Horizontal start point
-	{0x18, 0xa0},
-	{0x19, 0x03},
-	{0x1a, 0xf0},
-	{0x1b, 0x89},
+
+	HOUT_START,
+	HOUT_SIZE,
+	VOUT_START,
+	VOUT_SIZE,
+	PIX_SHIFT,
+
 	{0x22, 0x03},
 	{0x29, 0x17},
 	{0x2b, 0xf8},
 	{0x2c, 0x01},
-	{0x31, 0xa0}, //HSIZE MSB
-	{0x32, 0xf0}, //VSIZE MSB
-	{0x33, 0xc4}, //HV OFFSET
+	{0x31, 0xa0},//HSIZE MSB
+	{0x32, 0xf0},//VSIZE MSB
+	{0x33, 0xc4},//HV OFFSET
 	{0x35, 0x05},//Analog setting
 	{0x36, 0x3f},//Analog setting
 
@@ -149,15 +161,15 @@ static struct rk_sensor_reg sensor_init_data[] ={
 	{0x57, 0xff},
 	{0x58, 0xff},
 	{0x59, 0xff},
-	{0x5f, 0x04}, //Analog setting
+	{0x5f, 0x04},//Analog setting
 	{0xec, 0x00},
-	{0x13, 0xdf}, //Reactivated everything in register REG13
+	{0x13, 0xdf},//Reactivated everything in register REG13
 	{0x80, 0x7d},
 	{0x81, 0x3f},
 	{0x82, 0x32},
-	{0x83, 0x01}, 
+	{0x83, 0x01},
 	{0x38, 0x11},
-	{0x84, 0x70},	
+	{0x84, 0x70},
 	{0x85, 0x00},
 	{0x86, 0x03},
 	{0x87, 0x01},
@@ -213,45 +225,48 @@ static struct rk_sensor_reg sensor_init_data[] ={
 	{0x7b, 0x1f},
 	{0xEC, 0x00},//00/80 for manual/auto
 	{0x7c, 0x0c},
-
-
+	ENDMARKER,
 	SensorEnd
-	
 };
+
 /* Sensor full resolution setting: recommand for capture */
 static struct rk_sensor_reg sensor_fullres_lowfps_data[] ={
 	//7.5 fps with input clock 24 MHz
 	{0x11, 0x01},
 	{0x55, 0x00},
 	{0x15, 0x00},
+	ENDMARKER,
 	SensorEnd
-	
 };
+
 /* Sensor full resolution setting: recommand for video */
 static struct rk_sensor_reg sensor_fullres_highfps_data[] ={
-	SensorEnd	
+	SensorEnd
 };
+
 /* Preview resolution setting*/
 static struct rk_sensor_reg sensor_preview_data[] =
 {
-	{0x0e, 0xe4}, //Sleep the sensor
-	{0x12, 0x80},
-	SensorWaitMs(5), 	
-	{0x13, 0x00}, //Deactivate everything on REG13
-	//Registers related to CLK	
-	{0x55, 0x40},
-	{0x11, 0x01},
+	{0x0e, 0xe4},//Sleep the sensor
+	SENSOR_RST,
+	SensorWaitMs(5),
+	{0x13, 0x00},//Deactivate everything on REG13
+	//Registers related to CLK
+	REG55_PLLx4,
+	CLK_DIV,
 	
 	{0x12, 0x00},
 	{0xd5, 0x10},
 	{0x0c, 0xd2},
 	{0x0d, 0x34},//Analog setting
-	//Following registers are related to output size	
-	{0x17, 0x25},//Horizontal output start point
-	{0x18, 0xa0},//Horizontal output size
-	{0x19, 0x03},//Vertical start point
-	{0x1a, 0xf0},//Vertical output size
-	{0x1b, 0x89},//Pixel shift
+
+	//Following registers are related to output size
+	HOUT_START,
+	HOUT_SIZE,
+	VOUT_START,
+	VOUT_SIZE,
+	PIX_SHIFT,
+
 	{0x22, 0x03},
 	{0x29, 0x17},
 	{0x2b, 0xf8},
@@ -302,13 +317,13 @@ static struct rk_sensor_reg sensor_preview_data[] =
 	{0x59, 0xff},
 	{0x5f, 0x04},//Analog setting
 	{0xec, 0x00},
-	{0x13, 0xdf}, //Reactivated everything in register REG13
+	{0x13, 0xdf},//Reactivated everything in register REG13
 	{0x80, 0x7d},
 	{0x81, 0x3f},
 	{0x82, 0x32},
 	{0x83, 0x01},
 	{0x38, 0x11},
-	{0x84, 0x70},	
+	{0x84, 0x70},
 	{0x85, 0x00},
 	{0x86, 0x03},
 	{0x87, 0x01},
@@ -367,6 +382,7 @@ static struct rk_sensor_reg sensor_preview_data[] =
 	{0x38, 0x17},
 	{0x84, 0x02},//DSP outputs colorbar testing purposes
 	{0x0e, 0xe0},
+	ENDMARKER,
 	SensorEnd
 };
 /* 1280x720 */
@@ -381,17 +397,17 @@ static struct rk_sensor_reg sensor_1080p[]={
 
 
 static struct rk_sensor_reg sensor_softreset_data[]={
- 	SensorRegVal(0x12,0x80),
+	SensorRegVal(0x12,0x80),
 	SensorWaitMs(5),
+	ENDMARKER,
 	SensorEnd
-//	{ 0xFF, 0xFF },	/* END MARKER */
 };
 
 static struct rk_sensor_reg sensor_check_id_data[]={
-    	SensorRegVal(0x0a,0),
-    	SensorRegVal(0x0b,0),
+	SensorRegVal(0x0a,0),
+	SensorRegVal(0x0b,0),
+	ENDMARKER,
 	SensorEnd
-//	{ 0xFF, 0xFF },	/* END MARKER */
 };
 /*
 *  The following setting must been filled, if the function is turn on by CONFIG_SENSOR_xxxx
@@ -401,9 +417,9 @@ static struct rk_sensor_reg sensor_WhiteB_Auto[]=
 	{0x13, 0xdf},
 	{0x15, 0x00},
 	{0x2d, 0x00},
-	{0x2e, 0x00},	
+	{0x2e, 0x00},
+	ENDMARKER,
 	SensorEnd
-//	{ 0xFF, 0xFF },	/* END MARKER */
 };
 /* Cloudy Colour Temperature : 6500K - 8000K  */
 static	struct rk_sensor_reg sensor_WhiteB_Cloudy[]=
@@ -415,8 +431,8 @@ static	struct rk_sensor_reg sensor_WhiteB_Cloudy[]=
 	{0x15, 0x00},
 	{0x2d, 0x00},
 	{0x2e, 0x00},
+	ENDMARKER,
 	SensorEnd
-//	{ 0xFF, 0xFF },	/* END MARKER */
 };
 /* ClearDay Colour Temperature : 5000K - 6500K	*/
 static	struct rk_sensor_reg sensor_WhiteB_ClearDay[]=
@@ -429,34 +445,35 @@ static	struct rk_sensor_reg sensor_WhiteB_ClearDay[]=
 	{0x15, 0x00},
 	{0x2d, 0x00},
 	{0x2e, 0x00},
+	ENDMARKER,
 	SensorEnd
-//	{ 0xFF, 0xFF },	/* END MARKER */
 };
 /* Office Colour Temperature : 3500K - 5000K  */
 static	struct rk_sensor_reg sensor_WhiteB_TungstenLamp1[]=
 {
 	//Office
-	{ 0x13, 0xdd },
-	{ 0x01, 0x84 },
-	{ 0x02, 0x4c },
-	{ 0x03, 0x40 },
+	{0x13, 0xdd},
+	{0x01, 0x84},
+	{0x02, 0x4c},
+	{0x03, 0x40},
 	{0x15, 0x00},
 	{0x2d, 0x00},
 	{0x2e, 0x00},
-//	{ 0xFF, 0xFF },	/* END MARKER */
+	ENDMARKER,
 	SensorEnd
 };
 /* Home Colour Temperature : 2500K - 3500K	*/
 static	struct rk_sensor_reg sensor_WhiteB_TungstenLamp2[]=
 {
 	//Home
-	{ 0x13, 0xdd },
-	{ 0x01, 0x96 },
-	{ 0x02, 0x40 },
-	{ 0x03, 0x4a },
+	{0x13, 0xdd},
+	{0x01, 0x96},
+	{0x02, 0x40},
+	{0x03, 0x4a},
 	{0x15, 0x00},
 	{0x2d, 0x00},
 	{0x2e, 0x00},
+	ENDMARKER,
 	SensorEnd
 };
 static struct rk_sensor_reg *sensor_WhiteBalanceSeqe[] = {sensor_WhiteB_Auto, sensor_WhiteB_TungstenLamp1,sensor_WhiteB_TungstenLamp2,
@@ -466,7 +483,6 @@ static struct rk_sensor_reg *sensor_WhiteBalanceSeqe[] = {sensor_WhiteB_Auto, se
 static	struct rk_sensor_reg sensor_Brightness0[]=
 {
 	// Brightness -2
-//	{ 0xFF, 0xFF },	/* END MARKER */
 	SensorEnd
 };
 
@@ -474,35 +490,30 @@ static	struct rk_sensor_reg sensor_Brightness1[]=
 {
 	// Brightness -1
 	SensorEnd
-//	{ 0xFF, 0xFF },	/* END MARKER */
 };
 
 static	struct rk_sensor_reg sensor_Brightness2[]=
 {
-	//	Brightness 0
+	//Brightness 0
 	SensorEnd
-//	{ 0xFF, 0xFF },	/* END MARKER */
 };
 
 static	struct rk_sensor_reg sensor_Brightness3[]=
 {
 	// Brightness +1
 	SensorEnd
-//	{ 0xFF, 0xFF },	/* END MARKER */
 };
 
 static	struct rk_sensor_reg sensor_Brightness4[]=
 {
-	//	Brightness +2
+	//Brightness +2
 	SensorEnd
-//	{ 0xFF, 0xFF },	/* END MARKER */
 };
 
 static	struct rk_sensor_reg sensor_Brightness5[]=
 {
-	//	Brightness +3
+	//Brightness +3
 	SensorEnd
-//	{ 0xFF, 0xFF },	/* END MARKER */
 };
 static struct rk_sensor_reg *sensor_BrightnessSeqe[] = {sensor_Brightness0, sensor_Brightness1, sensor_Brightness2, sensor_Brightness3,
 	sensor_Brightness4, sensor_Brightness5,NULL,
@@ -514,6 +525,7 @@ static	struct rk_sensor_reg sensor_Effect_Normal[] =
 	{0xda, 0x00},
 	{0xdf, 0x80},
 	{0xe0, 0x80},
+	ENDMARKER,
 	SensorEnd
 };
 
@@ -525,6 +537,7 @@ static	struct rk_sensor_reg sensor_Effect_Negative[] =
 	{0xda, 0x40},
 	{0xdf, 0x80},
 	{0xe0, 0x80},
+	ENDMARKER,
 	SensorEnd
 };
 static	struct rk_sensor_reg sensor_Effect_Bluish[] =
@@ -534,6 +547,7 @@ static	struct rk_sensor_reg sensor_Effect_Bluish[] =
 	{0xda, 0x18},
 	{0xdf, 0xa0},
 	{0xe0, 0x40},
+	ENDMARKER,
 	SensorEnd
 };
 
@@ -544,6 +558,7 @@ static	struct rk_sensor_reg sensor_Effect_Green[] =
 	{0xda, 0x18},
 	{0xdf, 0x60},
 	{0xe0, 0x60},
+	ENDMARKER,
 	SensorEnd
 };
 static struct rk_sensor_reg *sensor_EffectSeqe[] = {sensor_Effect_Normal, sensor_Effect_Negative,
@@ -552,43 +567,36 @@ static struct rk_sensor_reg *sensor_EffectSeqe[] = {sensor_Effect_Normal, sensor
 
 static	struct rk_sensor_reg sensor_Exposure0[]=
 {
-//	{ 0xFF, 0xFF },	/* END MARKER */
 	SensorEnd
 };
 
 static	struct rk_sensor_reg sensor_Exposure1[]=
 {
-//	{ 0xFF, 0xFF },	/* END MARKER */
 	SensorEnd
 };
 
 static	struct rk_sensor_reg sensor_Exposure2[]=
 {
-//	{ 0xFF, 0xFF },	/* END MARKER */
 	SensorEnd
 };
 
 static	struct rk_sensor_reg sensor_Exposure3[]=
 {
-//	{ 0xFF, 0xFF },	/* END MARKER */
 	SensorEnd
 };
 
 static	struct rk_sensor_reg sensor_Exposure4[]=
 {
-//	{ 0xFF, 0xFF },	/* END MARKER */
 	SensorEnd
 };
 
 static	struct rk_sensor_reg sensor_Exposure5[]=
 {
-//	{ 0xFF, 0xFF },	/* END MARKER */
 	SensorEnd
 };
 
 static	struct rk_sensor_reg sensor_Exposure6[]=
 {
-//	{ 0xFF, 0xFF },	/* END MARKER */
 	SensorEnd
 };
 
@@ -598,63 +606,53 @@ static struct rk_sensor_reg *sensor_ExposureSeqe[] = {sensor_Exposure0, sensor_E
 
 static	struct rk_sensor_reg sensor_Saturation0[]=
 {
-//	{ 0xFF, 0xFF },	/* END MARKER */
 	SensorEnd
 };
 
 static	struct rk_sensor_reg sensor_Saturation1[]=
 {
-//	{ 0xFF, 0xFF },	/* END MARKER */
 	SensorEnd
 };
 
 static	struct rk_sensor_reg sensor_Saturation2[]=
 {
-//	{ 0xFF, 0xFF },	/* END MARKER */
 	SensorEnd
 };
 static struct rk_sensor_reg *sensor_SaturationSeqe[] = {sensor_Saturation0, sensor_Saturation1, sensor_Saturation2, NULL,};
 
 static	struct rk_sensor_reg sensor_Contrast0[]=
 {
-//	{ 0xFF, 0xFF },	/* END MARKER */
 	SensorEnd
 };
 
 static	struct rk_sensor_reg sensor_Contrast1[]=
 {
-//	{ 0xFF, 0xFF },	/* END MARKER */
 	SensorEnd
 };
 
 static	struct rk_sensor_reg sensor_Contrast2[]=
 {
-//	{ 0xFF, 0xFF },	/* END MARKER */
 	SensorEnd
 };
 
 static	struct rk_sensor_reg sensor_Contrast3[]=
 {
-//	{ 0xFF, 0xFF },	/* END MARKER */
 	SensorEnd
 };
 
 static	struct rk_sensor_reg sensor_Contrast4[]=
 {
-//	{ 0xFF, 0xFF },	/* END MARKER */
 	SensorEnd
 };
 
 
 static	struct rk_sensor_reg sensor_Contrast5[]=
 {
-//	{ 0xFF, 0xFF },	/* END MARKER */
 	SensorEnd
 };
 
 static	struct rk_sensor_reg sensor_Contrast6[]=
 {
-//	{ 0xFF, 0xFF },	/* END MARKER */
 	SensorEnd
 };
 static struct rk_sensor_reg *sensor_ContrastSeqe[] = {sensor_Contrast0, sensor_Contrast1, sensor_Contrast2, sensor_Contrast3,
@@ -662,7 +660,6 @@ static struct rk_sensor_reg *sensor_ContrastSeqe[] = {sensor_Contrast0, sensor_C
 };
 static	struct rk_sensor_reg sensor_SceneAuto[] =
 {
-//	{ 0xFF, 0xFF },	/* END MARKER */
 	SensorEnd
 };
 
@@ -672,6 +669,7 @@ static	struct rk_sensor_reg sensor_SceneNight[] =
 	{0x11, 0x03},
 	{0x55, 0x00},
 	{0x15, 0x00},
+	ENDMARKER,
 	SensorEnd
 };
 static struct rk_sensor_reg *sensor_SceneSeqe[] = {sensor_SceneAuto, sensor_SceneNight,NULL,};
@@ -713,8 +711,8 @@ static struct sensor_v4l2ctrl_usr_s sensor_controls[] =
 
 //MUST define the current used format as the first item   
 static struct rk_sensor_datafmt sensor_colour_fmts[] = {
-	{ V4L2_MBUS_FMT_UYVY8_2X8,V4L2_COLORSPACE_SRGB },	
-	{ V4L2_MBUS_FMT_YUYV8_2X8,V4L2_COLORSPACE_SRGB }		
+	{ V4L2_MBUS_FMT_UYVY8_2X8,V4L2_COLORSPACE_SRGB },
+	{ V4L2_MBUS_FMT_YUYV8_2X8,V4L2_COLORSPACE_SRGB }
 };
 
 static struct soc_camera_ops sensor_ops;
@@ -809,7 +807,7 @@ static void OV7740WriteShutter(struct i2c_client *client,bool is_preview, unsign
 	
 	//AEC PK EXPOSURE
 	shutter*=16;
-	sensor_write(client,0x10, (shutter & 0x00FF));		   //AEC[7:0]
+	sensor_write(client,0x10, (shutter & 0x00FF));  //AEC[7:0]
 	sensor_write(client,0x0F, ((shutter & 0xFF00) >>8));  //AEC[15:8]
 
 	if(extra_exposure_lines>0)
@@ -843,8 +841,6 @@ static int sensor_ae_transfer(struct i2c_client *client)
 	shutter*=2;
 
 	OV7740WriteShutter(client,0,shutter);
-	
-	
 	return 0;
 }
 /*
@@ -995,12 +991,12 @@ static int sensor_flip_cb(struct i2c_client *client, int flip)
 		}
 	}*/
 
-	return err;    
+	return err;
 }
 /*
 * the function is v4l2 control V4L2_CID_VFLIP callback  
 */
-static int sensor_v4l2ctrl_flip_cb(struct soc_camera_device *icd, struct sensor_v4l2ctrl_info_s *ctrl_info, 
+static int sensor_v4l2ctrl_flip_cb(struct soc_camera_device *icd, struct sensor_v4l2ctrl_info_s *ctrl_info,
                                                      struct v4l2_ext_control *ext_ctrl)
 {
 	struct i2c_client *client = to_i2c_client(to_soc_camera_control(icd));
