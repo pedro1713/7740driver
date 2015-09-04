@@ -62,7 +62,6 @@ struct specific_sensor{
 	struct generic_sensor common_sensor;
 	//define user data below
 	struct sensor_parameter parameter;
-
 };
 
 /*
@@ -102,7 +101,7 @@ static struct rk_sensor_reg sensor_init_data[] ={
 	REG55_PLLx4,
 	CLK_DIV,
 
-	{0x12, 0x10},
+	{0x12, 0x00},
 	{0xd5, 0x10},
 	{0x0c, 0x02},
 	{0x0d, 0x34},//Analog setting
@@ -225,7 +224,6 @@ static struct rk_sensor_reg sensor_init_data[] ={
 	{0x7b, 0x1f},
 	{0xEC, 0x00},//00/80 for manual/auto
 	{0x7c, 0x0c},
-	ENDMARKER,
 	SensorEnd
 };
 
@@ -235,7 +233,6 @@ static struct rk_sensor_reg sensor_fullres_lowfps_data[] ={
 	{0x11, 0x01},
 	{0x55, 0x00},
 	{0x15, 0x00},
-	ENDMARKER,
 	SensorEnd
 };
 
@@ -257,7 +254,7 @@ static struct rk_sensor_reg sensor_preview_data[] =
 	
 	{0x12, 0x00},
 	{0xd5, 0x10},
-	{0x0c, 0xd2},
+	{0x0c, 0x02},
 	{0x0d, 0x34},//Analog setting
 
 	//Following registers are related to output size
@@ -382,7 +379,6 @@ static struct rk_sensor_reg sensor_preview_data[] =
 	{0x38, 0x17},
 	{0x84, 0x02},//DSP outputs colorbar testing purposes
 	{0x0e, 0xe0},
-	ENDMARKER,
 	SensorEnd
 };
 /* 1280x720 */
@@ -399,14 +395,12 @@ static struct rk_sensor_reg sensor_1080p[]={
 static struct rk_sensor_reg sensor_softreset_data[]={
 	SensorRegVal(0x12,0x80),
 	SensorWaitMs(5),
-	ENDMARKER,
 	SensorEnd
 };
 
 static struct rk_sensor_reg sensor_check_id_data[]={
 	SensorRegVal(0x0a,0),
 	SensorRegVal(0x0b,0),
-	ENDMARKER,
 	SensorEnd
 };
 /*
@@ -757,12 +751,12 @@ static int sensor_parameter_record(struct i2c_client *client)
 }
 #define OV7740_FULL_PERIOD_PIXEL_NUMS	(656)  // default pixel#(w/o dummy pixels) in VGA mode
 #define OV7740_FULL_PERIOD_LINE_NUMS	(496)  // default line#(w/o dummy lines) in VGA mode
-#define OV7740_PV_PERIOD_PIXEL_NUMS	(656)  // default pixel#(w/o dummy pixels) in QVGA mode
-#define OV7740_PV_PERIOD_LINE_NUMS	(496)  // default line#(w/o dummy lines) in QVGA mode
+#define OV7740_PV_PERIOD_PIXEL_NUMS	(328)  // default pixel#(w/o dummy pixels) in QVGA mode
+#define OV7740_PV_PERIOD_LINE_NUMS	(248)  // default line#(w/o dummy lines) in QVGA mode
 
 /* SENSOR EXPOSURE LINE LIMITATION */
 #define OV7740_FULL_EXPOSURE_LIMITATION   (488)
-#define OV7740_PV_EXPOSURE_LIMITATION	  (488)
+#define OV7740_PV_EXPOSURE_LIMITATION	  (244)
 
 // SENSOR VGA SIZE
 #define OV7740_IMAGE_SENSOR_FULL_WIDTH	  (640)
